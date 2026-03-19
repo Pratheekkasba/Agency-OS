@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Read-only Client Portal: Public read access to tasks so clients can view status.
+    // Only authenticated users (admins) can create/update/delete tasks.
+    match /tasks/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Shared Inbox/Webhook: Messages require authentication to read or modify.
+    // Webhooks using the Firebase Admin SDK on the backend will bypass these rules.
+    match /messages/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

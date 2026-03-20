@@ -165,7 +165,7 @@ export const WaitlistHero = () => {
                 }}
             >
                 {/* Background Decorative Layer — floating app icons */}
-                <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+                <div className="hidden md:block absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
                     <style>{`
                         @keyframes float-a {
                             0%, 100% { transform: translateY(0px) rotate(var(--r)); }
@@ -309,7 +309,7 @@ export const WaitlistHero = () => {
                     </div>
 
                     {/* Form / Success Container */}
-                    <div className="w-full max-w-lg px-4 h-[60px] relative">{/* Confetti Canvas */}
+                    <div className="w-full max-w-lg px-4 relative flex flex-col">{/* Confetti Canvas */}
                         {/* Confetti Canvas */}
                         <canvas
                             ref={canvasRef}
@@ -374,7 +374,7 @@ export const WaitlistHero = () => {
                                 value={email}
                                 disabled={status === "loading"}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full h-[60px] pl-6 pr-[150px] rounded-full outline-none transition-all duration-200 placeholder-zinc-500 disabled:opacity-70 disabled:cursor-not-allowed"
+                                className="w-full h-[60px] pl-6 pr-6 sm:pr-[150px] rounded-[30px] sm:rounded-full outline-none transition-all duration-200 placeholder-zinc-500 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg"
                                 style={{
                                     backgroundColor: colors.inputBg,
                                     color: colors.textMain,
@@ -382,11 +382,11 @@ export const WaitlistHero = () => {
                                 }}
                             />
 
-                            <div className="absolute top-[6px] right-[6px] bottom-[6px]">
+                            <div className="relative sm:absolute mt-3 sm:mt-0 sm:top-[6px] sm:right-[6px] sm:bottom-[6px] w-full sm:w-auto h-[60px] sm:h-auto">
                                 <button
                                     type="submit"
                                     disabled={status === "loading"}
-                                    className="h-full px-6 rounded-xl font-medium text-white transition-all active:scale-95 hover:scale-[1.02] disabled:hover:scale-100 disabled:active:scale-100 disabled:cursor-wait flex items-center justify-center min-w-[170px]"
+                                    className="w-full sm:w-auto h-full px-6 rounded-[30px] sm:rounded-xl font-medium text-white transition-all active:scale-95 hover:scale-[1.02] disabled:hover:scale-100 disabled:active:scale-100 disabled:cursor-wait flex items-center justify-center min-w-[170px]"
                                     style={{
                                         backgroundColor: colors.bluePrimary,
                                         boxShadow: "0 0 20px rgba(91,92,246,0.4)",

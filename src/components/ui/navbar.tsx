@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 
 const NAV = {
   ctaBg: "#5B5CF6",
@@ -25,6 +26,7 @@ function NavUnderline({ children }: { children: React.ReactNode }) {
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -89,8 +91,8 @@ export function Navbar() {
           })}
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-3">
+        {/* Right side Desktop */}
+        <div className="hidden md:flex items-center gap-3">
           <a
             href="/login"
             className="hidden sm:inline-flex text-[14px] font-medium tracking-wide text-gray-400 hover:text-white transition-colors duration-200"
@@ -125,7 +127,59 @@ export function Navbar() {
             Get Started <span aria-hidden>→</span>
           </Link>
         </div>
+
+        {/* Mobile menu toggle */}
+        <button
+          className="md:hidden p-2 text-gray-400 hover:text-white transition-colors"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute top-[72px] left-0 right-0 py-6 px-6 flex flex-col gap-6 shadow-2xl border-b border-white/10" style={{ background: "rgba(11,11,15,0.98)", backdropFilter: "blur(20px)" }}>
+          <div className="flex flex-col gap-4">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="text-[16px] font-medium tracking-wide text-gray-300 hover:text-white transition-colors duration-200"
+                style={{ fontFamily: "'Inter', sans-serif", textDecoration: "none" }}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+          
+          <div className="h-px bg-white/10 w-full" />
+          
+          <div className="flex flex-col gap-4">
+            <a
+              href="/login"
+              className="text-[16px] font-medium tracking-wide text-gray-300 hover:text-white transition-colors duration-200"
+              style={{ fontFamily: "'Inter', sans-serif", textDecoration: "none" }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Login
+            </a>
+            <Link
+              href="/signup"
+              onClick={() => setMobileMenuOpen(false)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-medium text-white shadow-[0_0_20px_rgba(91,92,246,0.4)]"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 15,
+                background: NAV.ctaBg,
+              }}
+            >
+              Get Started <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

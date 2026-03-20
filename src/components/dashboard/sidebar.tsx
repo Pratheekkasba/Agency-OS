@@ -24,7 +24,7 @@ export function DashboardSidebar() {
   };
 
   return (
-    <aside className="w-60 min-h-screen flex flex-col border-r border-[#1F1F2B] bg-[#0D0D13] shrink-0">
+    <aside className="hidden md:flex w-60 min-h-screen flex-col border-r border-[#1F1F2B] bg-[#0D0D13] shrink-0">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-[#1F1F2B]">
         <span

@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // Read-only Client Portal: Public read access to tasks so clients can view status.
     // Only authenticated users (admins) can create/update/delete tasks.
     match /tasks/{document=**} {
@@ -14,5 +14,16 @@ service cloud.firestore {
     match /messages/{document=**} {
       allow read, write: if request.auth != null;
     }
+
+    // Users: each user can read and write their own document only.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Clients: only the agency owner (matched by agencyId == uid) can read/write.
+    match /clients/{clientId} {
+      allow read, write: if request.auth != null && resource.data.agencyId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.agencyId == request.auth.uid;
+    }
   }
-}
+}

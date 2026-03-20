@@ -165,7 +165,7 @@ export const WaitlistHero = () => {
                 }}
             >
                 {/* Background Decorative Layer — floating app icons */}
-                <div className="hidden md:block absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+                <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden opacity-25 md:opacity-100 scale-75 md:scale-100 origin-center transition-all duration-700">
                     <style>{`
                         @keyframes float-a {
                             0%, 100% { transform: translateY(0px) rotate(var(--r)); }

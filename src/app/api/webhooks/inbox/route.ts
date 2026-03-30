@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { WebhookMessage } from "@/types";
+
+// Legacy type — kept inline for backward compat with webhook ingestion
+interface WebhookMessage {
+    id: string;
+    sender: string;
+    content: string;
+    intent?: string;
+    draftResponse?: string;
+    createdAt: string;
+    status: "pending_review" | "approved" | "sent";
+}
 
 export async function POST(req: NextRequest) {
     try {

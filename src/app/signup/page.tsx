@@ -36,7 +36,7 @@ export default function SignupPage() {
         createdAt: serverTimestamp(),
       });
 
-      router.push("/dashboard");
+      router.push("/role");
     } catch (err: any) {
       console.error("[Signup] Firebase error code:", err?.code);
       console.error("[Signup] Firebase error message:", err?.message);
@@ -80,7 +80,7 @@ export default function SignupPage() {
         });
       }
       
-      router.push("/dashboard");
+      router.push("/role");
     } catch (err: any) {
       setError("Google sign in failed. Please try again.");
       setLoading(false);

@@ -63,7 +63,7 @@ export default function FeaturesPage() {
       style={{
         background: C.bg,
         color: C.text,
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Space Grotesk', sans-serif",
         minHeight: "100vh",
         overflowX: "hidden",
       }}
@@ -173,7 +173,7 @@ export default function FeaturesPage() {
               {/* Placeholder visual block for future UI/illustrations */}
               <div className="relative h-full">
                 <div
-                  className="h-full min-h-[220px] rounded-2xl border"
+                  className="h-full min-h-[220px] rounded-2xl border overflow-hidden relative"
                   style={{
                     borderColor: C.border,
                     background:
@@ -181,15 +181,23 @@ export default function FeaturesPage() {
                     boxShadow: "0 22px 60px rgba(15,23,42,0.8)",
                   }}
                 >
-                  <div className="w-full h-full flex items-center justify-center px-6 py-8">
-                    <p
-                      className="text-xs md:text-sm text-center"
-                      style={{ color: C.muted, maxWidth: 260 }}
-                    >
-                      Future space for product visuals. For now, this page is focused
-                      on clearly explaining how Agency OS works.
-                    </p>
-                  </div>
+                  {s.id === "client-portal" ? (
+                    <img 
+                      src="/portal.png" 
+                      alt="Client Portal Interface" 
+                      className="w-full h-full object-cover object-left-top scale-105 transform origin-top"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center w-full h-full px-6 py-8">
+                      <p
+                        className="text-xs md:text-sm text-center"
+                        style={{ color: C.muted, maxWidth: 260 }}
+                      >
+                        Future space for product visuals. For now, this page is focused
+                        on clearly explaining how Agency OS works.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </article>

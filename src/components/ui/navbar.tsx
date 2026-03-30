@@ -10,7 +10,7 @@ const NAV = {
 };
 
 const NAV_ITEMS = [
-  { label: "Product", href: "/" },
+  { label: "Home", href: "/" },
   { label: "Features", href: "/features" },
   { label: "Pricing", href: "/pricing" },
 ];

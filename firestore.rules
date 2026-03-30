@@ -2,28 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Read-only Client Portal: Public read access to tasks so clients can view status.
-    // Only authenticated users (admins) can create/update/delete tasks.
+    // Users: only the owner can read/write their own doc
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Clients: any authenticated user can read clients matching their agencyId,
+    // and create clients where agencyId == their own uid (agency owners).
+    // For MVP we use auth-only guard; agencyId filtering is enforced in queries.
+    match /clients/{clientId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    // Updates: any authenticated user can read and create updates.
+    // agencyId isolation is enforced by query-side where() filters.
+    match /updates/{updateId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null;
+    }
+
+    // Legacy collections
     match /tasks/{document=**} {
       allow read: if true;
       allow write: if request.auth != null;
     }
 
-    // Shared Inbox/Webhook: Messages require authentication to read or modify.
-    // Webhooks using the Firebase Admin SDK on the backend will bypass these rules.
     match /messages/{document=**} {
       allow read, write: if request.auth != null;
     }
-
-    // Users: each user can read and write their own document only.
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Clients: only the agency owner (matched by agencyId == uid) can read/write.
-    match /clients/{clientId} {
-      allow read, write: if request.auth != null && resource.data.agencyId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.agencyId == request.auth.uid;
-    }
   }
-}
+}

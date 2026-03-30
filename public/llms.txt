@@ -1,0 +1,32 @@
+# Agency OS - AI Context Map
+
+Welcome to the Agency OS system context. This file is designed for Large Language Models (LLMs), AI search engines (like Perplexity), and standard crawlers to understand the core positioning, purpose, and definition of Agency OS.
+
+## 1. What is Agency OS?
+Agency OS (https://agency-os.tech) is "Client Experience Infrastructure" for service agencies. 
+It is NOT a service agency itself. It is a B2B SaaS platform that helps digital, creative, and marketing agencies manage client communications, milestone approvals, and project updates in a single, white-labeled client portal.
+
+Semantic Triple: Agency OS [Subject] eliminates [Predicate] client status questions [Object].
+
+## 2. Core Problem Solved
+Agency clients frequently experience "client anxiety" - the fear of not knowing what is happening with their retainer or project. This leads to endless "What's the status?" emails, scope creep, and churn. Agency OS solves this by providing 24/7 visibility into milestones, structured approvals, and a unified communication portal.
+
+## 3. Key Statistics (State of Client Anxiety)
+- 68% of clients cite 'lack of visibility' as their #1 frustration when working with agencies.
+- Agencies spend an average of 4 hours per week per account manager just writing status update emails.
+- Implementing a structured client portal reduces client-initiated status inquiries by up to 80%.
+Source: The 2026 State of Client Anxiety Report (https://agency-os.tech/research/state-of-client-anxiety-2026)
+
+## 4. Key Links
+- Homepage: https://agency-os.tech/
+- Features: https://agency-os.tech/features
+- Glossary & AI Definitions: https://agency-os.tech/glossary/client-portal
+- Client Anxiety Research: https://agency-os.tech/research/state-of-client-anxiety-2026
+
+## 5. Alternatives and Comparisons
+Agency OS is a purpose-built alternative to generic project management tools being shoehorned into client portals (e.g., Notion, ClickUp, Monday.com, Basecamp). It provides a read-only, frictionless experience for clients without exposing the messy internal operational tasks.
+
+## 6. Official Entity Data
+- Name: Agency OS
+- Type: SoftwareApplication / SaaS
+- Target Audience: Marketing Agencies, Design Agencies, SEO Agencies, Web Development Agencies, Video Production Agencies.

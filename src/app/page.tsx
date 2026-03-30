@@ -94,7 +94,7 @@ function PrimaryBtn({ children, onClick }: { children: React.ReactNode; onClick?
       onClick={onClick}
       className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium text-white transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
       style={{
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Space Grotesk', sans-serif",
         fontSize: 15,
         background: C.primary,
         boxShadow: `0 0 20px rgba(91,92,246,0.35)`,
@@ -111,7 +111,7 @@ function GhostBtn({ children, onClick }: { children: React.ReactNode; onClick?: 
       onClick={onClick}
       className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:border-[#3A3A4A]"
       style={{
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Space Grotesk', sans-serif",
         fontSize: 15,
         color: C.muted,
         border: `1px solid ${C.borderHover}`,
@@ -164,7 +164,7 @@ function FeatureCard({
           </h3>
           <p
             className="mt-2 text-sm text-gray-400 leading-relaxed"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             {f.desc}
           </p>
@@ -177,9 +177,132 @@ function FeatureCard({
 /* ─── PAGE ─── */
 export default function Home() {
   return (
-    <main style={{ background: C.bg, color: C.text, fontFamily: "'Inter', sans-serif", overflowX: "hidden", minHeight: "100vh" }}>
+    <main style={{ background: C.bg, color: C.text, fontFamily: "'Space Grotesk', sans-serif", overflowX: "hidden", minHeight: "100vh" }}>
 
-      {/* Ambient glow — very subtle */}
+      {/* ── JSON-LD: SoftwareApplication (homepage + features + pricing) ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "@id": "https://agency-os.tech/#software",
+            name: "Agency OS",
+            alternateName: "Agency OS Client Portal",
+            url: "https://agency-os.tech",
+            description:
+              "Agency OS is client experience infrastructure for high-ticket service agencies. It replaces manual status email updates with a real-time, white-label client portal that gives clients on-demand visibility into project milestones, approvals, and deliverables — powered by Google AI and built on Firebase.",
+            applicationCategory: "BusinessApplication",
+            applicationSubCategory: "Client Portal Software",
+            operatingSystem: "Web, iOS, Android",
+            featureList: [
+              "White-label client portal with custom domain support",
+              "Real-time project status visibility for clients",
+              "AI-powered inbox triage using Google Gemini",
+              "Milestone-based client approval workflows",
+              "Role-based access control (agency team vs. client)",
+              "Shared team inbox with message assignment",
+              "Agency analytics dashboard — response time and client satisfaction",
+              "Integration with Gmail, Slack, WhatsApp, and Notion",
+              "Secure file and asset delivery vault",
+              "Magic link client authentication (no password required)",
+            ],
+            offers: [
+              {
+                "@type": "Offer",
+                name: "Starter",
+                description: "For solo consultants and small agencies. Includes client portal, basic updates, and 3 active clients.",
+                price: "0",
+                priceCurrency: "USD",
+                availability: "https://schema.org/InStock",
+                url: "https://agency-os.tech/pricing",
+              },
+              {
+                "@type": "Offer",
+                name: "Growth",
+                description: "For scaling agencies. Includes AI inbox triage, unlimited clients, custom domain portal, and team inbox.",
+                price: "79",
+                priceCurrency: "USD",
+                availability: "https://schema.org/InStock",
+                url: "https://agency-os.tech/pricing",
+              },
+              {
+                "@type": "Offer",
+                name: "Enterprise",
+                description: "For established agencies requiring white-label portals, advanced analytics, and priority support.",
+                price: "199",
+                priceCurrency: "USD",
+                availability: "https://schema.org/InStock",
+                url: "https://agency-os.tech/pricing",
+              },
+            ],
+            publisher: { "@id": "https://agency-os.tech/#organization" },
+          }),
+        }}
+      />
+
+      {/* ── JSON-LD: FAQPage (PAA expansion — adds 3–5 extra SERP lines) ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: [
+              {
+                "@type": "Question",
+                name: "What is a client portal for agencies?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "A client portal for agencies is a secure, branded web interface that gives clients on-demand visibility into their project's status, milestones, and deliverables — without requiring the agency to send manual email updates. Agency OS provides a real-time client portal with a Done / In Progress / Next framework that eliminates the 'what's the status?' question permanently.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How is Agency OS different from ClickUp or Notion?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "ClickUp and Notion are internal project management and documentation tools — they expose your team's internal task boards and can accidentally grant clients access to sensitive information. Agency OS is client experience infrastructure: a dedicated, curated layer your clients see that's entirely separate from your internal tools. It's designed to make clients feel informed and confident, not overwhelmed by internal project details.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Does Agency OS support white-label client portals?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Yes. The Agency OS Enterprise plan includes full white-label support: custom domain (CNAME), your agency's logo, brand colors, and complete removal of Agency OS branding — so clients see your agency's name and identity on their portal at every touchpoint.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How does Agency OS use AI for client communication?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Agency OS uses Google Gemini AI to power its inbox triage system. When client messages arrive via Gmail, Slack, or WhatsApp, Gemini automatically tags the message intent, categorizes urgency, and drafts a reply for your team to approve — reducing response time and ensuring nothing slips through the gaps.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "Can clients approve deliverables inside Agency OS?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "Yes. Agency OS client portals support milestone-based digital approvals. Clients can review a deliverable, leave feedback, and digitally sign off on a milestone — creating a timestamped audit trail that protects agencies from scope creep disputes.",
+                },
+              },
+              {
+                "@type": "Question",
+                name: "How quickly can an agency set up Agency OS?",
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: "An agency can be fully operational on Agency OS in under 15 minutes. The three-step setup involves connecting your communication channels (Gmail, Slack, WhatsApp), letting Gemini AI configure your inbox triage rules, and sharing a read-only portal link with your first client. No coding or technical setup required.",
+                },
+              },
+            ],
+          }),
+        }}
+      />
+
+
       <div className="fixed inset-0 pointer-events-none z-0" aria-hidden>
         <div style={{ position: "absolute", top: 0, left: "15%", width: 500, height: 500, borderRadius: "50%", background: `radial-gradient(circle, ${C.primary}0b 0%, transparent 70%)` }} />
         <div style={{ position: "absolute", top: "40%", right: 0, width: 350, height: 350, borderRadius: "50%", background: `radial-gradient(circle, ${C.accent}08 0%, transparent 70%)` }} />

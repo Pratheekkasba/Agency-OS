@@ -28,15 +28,30 @@ export default function LoginPage() {
       // Make sure the user exists in Firestore
       const userRef = doc(db, "users", cred.user.uid);
       const userSnap = await getDoc(userRef);
+      let userData = userSnap.data();
+      
       if (!userSnap.exists()) {
-        await setDoc(userRef, {
+        userData = {
           name: cred.user.displayName || "Unknown",
           email: cred.user.email,
           createdAt: serverTimestamp(),
-        });
+        };
+        await setDoc(userRef, userData);
       }
 
-      router.push("/dashboard");
+      if (userData?.role) {
+        localStorage.setItem("agency-role", userData.role);
+        if (userData.agencyId) {
+          localStorage.setItem("agency-id", userData.agencyId);
+        }
+        if (userData.role === "client") {
+          router.push("/portal");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        router.push("/role");
+      }
     } catch (err: any) {
       console.error("[Login] Firebase error code:", err?.code);
       console.error("[Login] Firebase error message:", err?.message);
@@ -73,16 +88,30 @@ export default function LoginPage() {
       
       const userRef = doc(db, "users", cred.user.uid);
       const userSnap = await getDoc(userRef);
+      let userData = userSnap.data();
       
       if (!userSnap.exists()) {
-        await setDoc(userRef, {
+        userData = {
           name: cred.user.displayName || "Unknown",
           email: cred.user.email,
           createdAt: serverTimestamp(),
-        });
+        };
+        await setDoc(userRef, userData);
       }
       
-      router.push("/dashboard");
+      if (userData?.role) {
+        localStorage.setItem("agency-role", userData.role);
+        if (userData.agencyId) {
+          localStorage.setItem("agency-id", userData.agencyId);
+        }
+        if (userData.role === "client") {
+          router.push("/portal");
+        } else {
+          router.push("/dashboard");
+        }
+      } else {
+        router.push("/role");
+      }
     } catch (err: any) {
       setError(`Google sign in failed: ${err?.code || err?.message || "Unknown error"}`);
       setLoading(false);

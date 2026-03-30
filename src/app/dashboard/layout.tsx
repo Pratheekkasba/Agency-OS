@@ -4,18 +4,25 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
+import { DashboardTopNav } from "@/components/dashboard/top-nav";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, userData, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
+    if (!loading) {
+      if (!user) {
+        router.replace("/login");
+      } else if (!userData?.role) {
+        router.replace("/role");
+      } else if (userData?.role === "client") {
+        router.replace("/portal");
+      }
     }
-  }, [user, loading, router]);
+  }, [user, userData, loading, router]);
 
-  if (loading) {
+  if (loading || !user || !userData?.role || userData?.role === "client") {
     return (
       <div suppressHydrationWarning className="min-h-screen bg-[#0B0B0F] flex items-center justify-center">
         <div suppressHydrationWarning className="w-6 h-6 border-2 border-[#5B5CF6] border-t-transparent rounded-full animate-spin" />
@@ -23,12 +30,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) return null;
-
   return (
-    <div suppressHydrationWarning className="min-h-screen bg-[#0B0B0F] flex">
+    <div suppressHydrationWarning className="min-h-screen bg-[#0B0B0F] flex overflow-hidden">
       <DashboardSidebar />
-      <main suppressHydrationWarning className="flex-1 overflow-auto">{children}</main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <DashboardTopNav />
+        <main suppressHydrationWarning className="flex-1 overflow-y-auto overflow-x-hidden relative">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
+

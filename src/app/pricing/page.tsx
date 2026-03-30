@@ -64,7 +64,7 @@ export default function PricingPage() {
       style={{
         background: C.bg,
         color: C.text,
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Space Grotesk', sans-serif",
         minHeight: "100vh",
         overflowX: "hidden",
       }}

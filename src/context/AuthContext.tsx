@@ -2,10 +2,19 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+import { auth, db } from "@/lib/firebase/config";
+import { doc, onSnapshot } from "firebase/firestore";
+import { ensureUserDoc } from "@/lib/firebase/firestore";
+
+interface UserData {
+    role?: "agency" | "client";
+    agencyId?: string;
+    [key: string]: any;
+}
 
 interface AuthContextType {
     user: User | null;
+    userData: UserData | null;
     loading: boolean;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
@@ -13,6 +22,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
+    userData: null,
     loading: true,
     signInWithGoogle: async () => { },
     signOut: async () => { },
@@ -20,14 +30,37 @@ const AuthContext = createContext<AuthContextType>({
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let unsubDoc: () => void;
+        
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
-            setLoading(false);
+            if (user) {
+                const userRef = doc(db, "users", user.uid);
+                unsubDoc = onSnapshot(userRef, async (docSnap) => {
+                    if (docSnap.exists()) {
+                        setUserData(docSnap.data() as UserData);
+                    } else {
+                        // First sign-in: create a stub user doc
+                        await ensureUserDoc(user.uid, user.email, user.displayName);
+                        setUserData(null);
+                    }
+                    setLoading(false);
+                });
+            } else {
+                setUserData(null);
+                setLoading(false);
+                if (unsubDoc) unsubDoc();
+            }
         });
-        return unsubscribe;
+        
+        return () => {
+            unsubscribe();
+            if (unsubDoc) unsubDoc();
+        };
     }, []);
 
     const signInWithGoogle = async () => {
@@ -40,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signOut }}>
             {children}
         </AuthContext.Provider>
     );

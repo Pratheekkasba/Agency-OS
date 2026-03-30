@@ -15,7 +15,7 @@ export default function WaitlistPage() {
       style={{
         background: C.bg,
         color: C.text,
-        fontFamily: "'Inter', sans-serif",
+        fontFamily: "'Sora', sans-serif",
         minHeight: "100vh",
         overflowX: "hidden",
       }}

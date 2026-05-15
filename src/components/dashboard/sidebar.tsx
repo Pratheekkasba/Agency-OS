@@ -219,7 +219,7 @@ export function DashboardSidebar() {
 
     // 2. Subscribe to messages for pending count (triage)
     const unsubTriage = subscribeToMessages(orgId, (msgs) => {
-      const pending = msgs.filter((m) => m.status === "pending").length;
+      const pending = msgs.filter((m) => m.status === "new" || m.status === "pending_approval").length;
       setUnreadTriageCount(pending);
     });
 

@@ -304,7 +304,7 @@ function TriageItem({
             <div className="flex items-center gap-1.5 px-2 py-1 bg-[#10B981]/10 rounded-full">
               <div className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
               <span className="text-[9px] font-bold text-[#10B981] uppercase tracking-tight">
-                {Math.round((message.confidence || 0.9) * 100)}% Confidence
+                {Math.round((message.confidenceScore || 0.9) * 100)}% Confidence
               </span>
             </div>
           </div>
@@ -653,7 +653,7 @@ export default function MessagesPage() {
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               Triage
-              {triageMessages.filter(m => m.status === "pending").length > 0 && (
+              {triageMessages.filter(m => m.status === "new" || m.status === "pending_approval").length > 0 && (
                 <span className="ml-1 w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
               )}
             </button>
@@ -676,19 +676,19 @@ export default function MessagesPage() {
           {activeTab === "triage" ? (
              <div className="p-4 space-y-3">
                 <p className="text-[10px] font-bold text-[#4B5563] uppercase tracking-widest px-1">External Inbound</p>
-                {triageMessages.filter(m => m.status === "pending").length === 0 && (
+                {triageMessages.filter(m => m.status === "new" || m.status === "pending_approval").length === 0 && (
                    <div className="py-8 text-center px-4">
                       <p className="text-xs text-[#6B7280]">No pending external messages.</p>
                    </div>
                 )}
-                {triageMessages.filter(m => m.status === "pending").map(m => (
+                {triageMessages.filter(m => m.status === "new" || m.status === "pending_approval").map(m => (
                   <button
                     key={m.id}
                     onClick={() => setActiveTab("triage")}
                     className="w-full text-left p-3 rounded-xl border border-[#1F1F2B] bg-[#131317]/30 hover:bg-[#131317] transition-all group"
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-white truncate pr-2">{m.senderName || m.clientEmail}</span>
+                      <span className="text-xs font-bold text-white truncate pr-2">{m.fromName || m.fromContact}</span>
                       <span className="text-[9px] text-[#4B5563] shrink-0">{fmtTime(m.receivedAt)}</span>
                     </div>
                     <p className="text-[10px] text-[#6B7280] truncate">{m.subject}</p>

@@ -1,4 +1,4 @@
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+﻿import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 
@@ -18,7 +18,7 @@ const firebaseConfig = {
 // and kills the build at the /_not-found page export step.
 function initFirebase(): FirebaseApp {
     if (!firebaseConfig.apiKey) {
-        // Means env vars aren't set — return existing app if any, else throw clearly.
+        // Means env vars aren't set --- return existing app if any, else throw clearly.
         if (getApps().length > 0) return getApp();
         throw new Error(
             "[Agency OS] Firebase API key is missing. " +
@@ -34,3 +34,4 @@ const auth: Auth = getAuth(app);
 const db: Firestore = getFirestore(app);
 
 export { app, auth, db };
+

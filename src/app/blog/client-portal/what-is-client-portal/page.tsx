@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ const faqSchema = {
   "@type": "FAQPage",
   mainEntity: [
     { "@type": "Question", name: "What should a client portal include?", acceptedAnswer: { "@type": "Answer", text: "A client portal for agencies should include real-time project status visibility, milestone tracking, secure file delivery, role-based access control, and a digital approval or sign-off system. The best portals show clients a clear Done / In Progress / Next framework without exposing internal task details." } },
-    { "@type": "Question", name: "Is a client portal the same as a project management tool?", acceptedAnswer: { "@type": "Answer", text: "No. A project management tool like ClickUp or Asana is an internal system where your team works. A client portal is the external, curated layer that clients see — designed to show progress and build confidence, not expose internal complexity." } },
+    { "@type": "Question", name: "Is a client portal the same as a project management tool?", acceptedAnswer: { "@type": "Answer", text: "No. A project management tool like ClickUp or Asana is an internal system where your team works. A client portal is the external, curated layer that clients see --- designed to show progress and build confidence, not expose internal complexity." } },
     { "@type": "Question", name: "How is Agency OS different from Notion as a client portal?", acceptedAnswer: { "@type": "Answer", text: "Notion requires manual setup of databases and permission structures, and one wrong permission grants clients access to your internal salary docs or margin sheets. Agency OS is purpose-built for the client-facing layer with partitioned access, role-based permissions, and a structured milestone framework out of the box." } },
   ],
 };
@@ -84,7 +84,7 @@ export default function WhatIsClientPortal() {
           </span>
         </h1>
         <p style={{ fontSize: 18, color: C.muted, lineHeight: 1.75, marginBottom: 28 }}>
-          A client portal for agencies is a secure, branded web interface that gives clients on-demand visibility into their project's status, milestones, and deliverables — without requiring the agency to send a single manual email update.
+          A client portal for agencies is a secure, branded web interface that gives clients on-demand visibility into their project's status, milestones, and deliverables --- without requiring the agency to send a single manual email update.
         </p>
         <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, color: "#555566" }}>
           <span>By Agency OS</span>
@@ -107,10 +107,10 @@ export default function WhatIsClientPortal() {
             The average agency account manager spends 3–5 hours per week writing status update emails. Multiply that by 10 active clients and you've burned two full workdays updating people who could have just... checked a link.
           </p>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 24 }}>
-            The deeper problem is not the time cost — it's the information asymmetry. Your team knows everything. Your client knows nothing until you decide to send an email. That gap creates what clients privately call "the black box" — and it's the root cause of most agency churn.
+            The deeper problem is not the time cost --- it's the information asymmetry. Your team knows everything. Your client knows nothing until you decide to send an email. That gap creates what clients privately call "the black box" --- and it's the root cause of most agency churn.
           </p>
 
-          <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>The "Status Update" Overhead Problem — Quantified</h3>
+          <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>The "Status Update" Overhead Problem --- Quantified</h3>
           <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 16, padding: 28, marginBottom: 24 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
               {[
@@ -137,11 +137,11 @@ export default function WhatIsClientPortal() {
             Not all portals are created equal. A basic shared Notion page technically qualifies, but collapses at scale and leaks sensitive data. An agency-grade client portal must include these five pillars:
           </p>
           {[
-            { title: "Real-Time Project Status Visibility", body: "Clients should see what is Done, what is In Progress, and what is Next — without needing to interpret internal task lists, developer jargon, or design phases they don't understand." },
+            { title: "Real-Time Project Status Visibility", body: "Clients should see what is Done, what is In Progress, and what is Next --- without needing to interpret internal task lists, developer jargon, or design phases they don't understand." },
             { title: "Milestone Approval and Sign-Off Workflows", body: "Verbal approvals evaporate in scope disputes. A proper portal captures digital sign-offs with timestamps, creating an immutable audit trail that protects both parties." },
-            { title: "Secure File and Asset Delivery", body: "Final deliverables should be downloadable directly from the portal — not buried in email threads or shared Drive folders with broken permissions." },
+            { title: "Secure File and Asset Delivery", body: "Final deliverables should be downloadable directly from the portal --- not buried in email threads or shared Drive folders with broken permissions." },
             { title: "Role-Based Access Control for Clients", body: "The client should only see what you choose to expose. A client-facing portal is a curated view, not a window into your entire operation." },
-            { title: "Branded, Premium Experience", body: "Your portal should look like it belongs to your agency—your logo, your domain, your colors. The experience should reinforce the premium you charge." },
+            { title: "Branded, Premium Experience", body: "Your portal should look like it belongs to your agency---your logo, your domain, your colors. The experience should reinforce the premium you charge." },
           ].map((item, i) => (
             <div key={i} style={{ padding: 24, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, marginBottom: 14 }}>
               <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>{item.title}</h3>
@@ -153,7 +153,7 @@ export default function WhatIsClientPortal() {
         {/* Comparison */}
         <section style={{ marginBottom: 56 }}>
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>
-            Client Portal vs. Shared Spreadsheet vs. Notion — What's the Difference?
+            Client Portal vs. Shared Spreadsheet vs. Notion --- What's the Difference?
           </h2>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
@@ -170,7 +170,7 @@ export default function WhatIsClientPortal() {
                   ["Access partitioning", "✓ Role-based by default", "⚠ Requires setup, error-prone", "✕ Not possible"],
                   ["Digital approvals", "✓ Built-in with audit trail", "✕ Not available", "✕ Not available"],
                   ["Real-time updates", "✓ Push notifications", "⚠ Manual page edits", "✕ Manual entry"],
-                  ["Security risk", "✓ Zero — partitioned", "⚠ High — permission errors common", "✕ Very high"],
+                  ["Security risk", "✓ Zero --- partitioned", "⚠ High --- permission errors common", "✕ Very high"],
                 ].map(([feature, ...vals], i) => (
                   <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
                     <td style={{ padding: "14px 16px", fontWeight: 600, color: "#E5E7EB" }}>{feature}</td>
@@ -185,7 +185,7 @@ export default function WhatIsClientPortal() {
 
           <h3 style={{ fontSize: 20, fontWeight: 700, marginTop: 40, marginBottom: 14 }}>Why Notion Leaks Sensitive Internal Data</h3>
           <p style={{ fontSize: 15, color: C.muted, lineHeight: 1.8 }}>
-            Sharing a Notion page gives clients access to your entire workspace structure unless you manually configure every database property and view filter. One drag-and-drop accident can expose your internal pricing, team salaries, or margin calculations. This is not a hypothetical edge case — it's a documented pattern in agencies using Notion as a client-facing tool.
+            Sharing a Notion page gives clients access to your entire workspace structure unless you manually configure every database property and view filter. One drag-and-drop accident can expose your internal pricing, team salaries, or margin calculations. This is not a hypothetical edge case --- it's a documented pattern in agencies using Notion as a client-facing tool.
           </p>
         </section>
 
@@ -204,7 +204,7 @@ export default function WhatIsClientPortal() {
           <ul style={{ listStyle: "none", padding: 0 }}>
             <CheckItem>Does it support custom domains so clients don't see a third-party brand name?</CheckItem>
             <CheckItem>Can clients approve deliverables and generate a time-stamped audit trail?</CheckItem>
-            <CheckItem>Is access control granular — can I show Client A only their project and nothing else?</CheckItem>
+            <CheckItem>Is access control granular --- can I show Client A only their project and nothing else?</CheckItem>
             <CheckItem>Does it integrate with the tools my team already uses (Slack, Gmail, ClickUp)?</CheckItem>
             <CrossItem>Does it require my team to learn a new project management workflow entirely?</CrossItem>
             <CrossItem>Does it expose clients to internal task details or team communications?</CrossItem>
@@ -221,14 +221,14 @@ export default function WhatIsClientPortal() {
             <Link href="/blog/agency-infrastructure/agency-management-software" style={{ color: C.primary, textDecoration: "underline" }}>
               client-facing layer in your agency's management stack
             </Link>
-            {" "}— separate from your internal ClickUp or Notion setup, connected to it via updates your team publishes.
+            {" "}--- separate from your internal ClickUp or Notion setup, connected to it via updates your team publishes.
           </p>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 14 }}>The "Done / In Progress / Next" Framework Explained</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
             {[
               { col: "Done ✅", color: "#10b981", desc: "Completed milestones with timestamps. Clients see concrete proof of progress without needing to ask." },
               { col: "In Progress ⏳", color: C.primary, desc: "The active sprint. Shown with a pulsing indicator so clients know the engine is running." },
-              { col: "Next 🔜", color: C.muted, desc: "What comes after. Grayed out until active — sets expectations and prevents scope expansion." },
+              { col: "Next 🔜", color: C.muted, desc: "What comes after. Grayed out until active --- sets expectations and prevents scope expansion." },
             ].map((item) => (
               <div key={item.col} style={{ padding: 20, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: item.color, marginBottom: 10 }}>{item.col}</div>
@@ -245,7 +245,7 @@ export default function WhatIsClientPortal() {
           </h2>
           {[
             { q: "What should a client portal include?", a: "A client portal for agencies should include real-time project status visibility, milestone tracking, secure file delivery, role-based access control, and a digital approval or sign-off system. The best portals show clients a clear Done / In Progress / Next framework without exposing internal task details." },
-            { q: "Is a client portal the same as a project management tool?", a: "No. A project management tool like ClickUp or Asana is an internal system where your team works. A client portal is the external, curated layer that clients see — designed to show progress and build confidence, not expose internal complexity." },
+            { q: "Is a client portal the same as a project management tool?", a: "No. A project management tool like ClickUp or Asana is an internal system where your team works. A client portal is the external, curated layer that clients see --- designed to show progress and build confidence, not expose internal complexity." },
             { q: "How is Agency OS different from Notion as a client portal?", a: "Notion requires manual setup of databases and permission structures, and one wrong permission grants clients access to your internal salary docs or margin sheets. Agency OS is purpose-built for the client-facing layer with partitioned access, role-based permissions, and a structured milestone framework out of the box." },
           ].map((faq) => (
             <div key={faq.q} style={{ padding: "20px 0", borderBottom: `1px solid ${C.border}` }}>
@@ -266,7 +266,7 @@ export default function WhatIsClientPortal() {
               → Build a structured client approval workflow that prevents scope creep
             </Link>
             <Link href="/blog/client-portal/white-label-client-portal" style={{ color: C.primary, fontSize: 14, textDecoration: "none" }}>
-              → White-label client portals for agencies — the competitive edge explained
+              → White-label client portals for agencies --- the competitive edge explained
             </Link>
           </div>
         </section>
@@ -285,3 +285,4 @@ export default function WhatIsClientPortal() {
     </main>
   );
 }
+

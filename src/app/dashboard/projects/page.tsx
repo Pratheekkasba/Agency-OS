@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getAllProjects, getAllClients, addProject } from "@/lib/firebase/firestore";
+import { getAllProjects, getAllClients, addProject, resolveOrganizationId } from "@/lib/firebase/firestore";
 import type { Project, Client } from "@/types";
 import {
   Plus, Folder, Search, LayoutGrid, List,
@@ -58,7 +58,7 @@ function ProgressRing({ progress, size = 44 }: { progress: number; size?: number
 export default function ProjectsPage() {
   const router = useRouter();
   const { userData } = useAuth();
-  const orgId = userData?.organization_id;
+  const orgId = resolveOrganizationId(userData);
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -341,7 +341,7 @@ export default function ProjectsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm text-[#9CA3AF]">
-                      {project.dueDate ? new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                      {project.dueDate ? new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "---"}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <button
@@ -417,7 +417,7 @@ export default function ProjectsPage() {
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                   {clients.length === 0 && (
-                    <option disabled>No clients yet — add one first</option>
+                    <option disabled>No clients yet --- add one first</option>
                   )}
                 </select>
               </div>
@@ -519,3 +519,4 @@ export default function ProjectsPage() {
     </div>
   );
 }
+

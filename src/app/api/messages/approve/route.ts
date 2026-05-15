@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { dispatchApprovedDraft } from "@/app/api/webhooks/inbox/route";
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
         await messageRef.update({
             status: "sent",
             aiDraft: draftText, // Save the final modified draft
-            resolvedAt: adminDb.collection("messages").firestore.FieldValue.serverTimestamp(),
+            resolvedAt: FieldValue.serverTimestamp(),
         });
 
         return NextResponse.json({ success: true }, { status: 200 });

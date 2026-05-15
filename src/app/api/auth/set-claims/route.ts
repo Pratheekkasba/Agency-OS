@@ -7,15 +7,15 @@ import { adminAuth } from "@/lib/firebase/admin";
  * Sets organization_id (and optionally role) as a Firebase Auth custom claim
  * so that Firestore Security Rules can enforce org-level data isolation.
  *
- * Called after role selection — the client sends its Firebase ID token so we
+ * Called after role selection --- the client sends its Firebase ID token so we
  * can verify the caller, then we set the claim server-side via Admin SDK.
  *
- * Body: { idToken: string; organization_id: string; role: string }
+ * Body: { idToken: string; organization_id: string; role: string; client_id?: string }
  */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { idToken, organization_id, role } = body;
+        const { idToken, organization_id, role, client_id } = body;
 
         if (!idToken || !organization_id || !role) {
             return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Verify the caller's token — this ensures only a legitimate signed-in
+        // Verify the caller's token --- this ensures only a legitimate signed-in
         // user can trigger this endpoint (not an anonymous HTTP call)
         const decoded = await adminAuth.verifyIdToken(idToken);
         const uid = decoded.uid;
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         await adminAuth.setCustomUserClaims(uid, {
             organization_id,
             role,
+            ...(client_id ? { client_id } : {}),
         });
 
         return NextResponse.json({ success: true }, { status: 200 });
@@ -45,3 +46,4 @@ export async function POST(req: NextRequest) {
         );
     }
 }
+

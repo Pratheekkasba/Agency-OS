@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 
 import { auth, db } from "@/lib/firebase/config";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import LoginForm from "@/components/ui/login-form";
+import { requiresEmailVerification } from "@/lib/auth/email-verification";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -106,6 +107,11 @@ export default function LoginPage() {
         }
         if (userData.role === "client") {
           router.push("/portal");
+        } else if (
+          requiresEmailVerification(userData.role) &&
+          !cred.user.emailVerified
+        ) {
+          router.push("/verify");
         } else {
           router.push("/dashboard");
         }

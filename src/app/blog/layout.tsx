@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: {
-    default: "Agency OS Blog — Client Experience & Agency Operations",
+    default: "Agency OS Blog --- Client Experience & Agency Operations",
     template: "%s | Agency OS Blog",
   },
 };
@@ -83,3 +83,4 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
     </div>
   );
 }
+

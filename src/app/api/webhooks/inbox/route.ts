@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { adminDb } from "@/lib/firebase/admin";
 import { sendEmail } from "@/lib/email";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -21,7 +22,7 @@ export async function dispatchApprovedDraft(clientEmail: string, subject: string
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: NextRequest) {
-    // ─── Security: verify shared webhook secret ───────────────────────────
+    // --- Security: verify shared webhook secret ---
     const incomingSecret = req.headers.get("x-webhook-secret");
     const expectedSecret = process.env.WEBHOOK_SECRET;
 
@@ -107,7 +108,7 @@ Message Body:
             aiDraft,
             confidenceScore,
             status: "pending_approval",
-            receivedAt: adminDb.collection("messages").firestore.FieldValue.serverTimestamp(),
+            receivedAt: FieldValue.serverTimestamp(),
             is_deleted: false,
         };
 
@@ -125,3 +126,4 @@ Message Body:
         );
     }
 }
+

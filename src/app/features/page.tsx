@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/ui/navbar";
+﻿import { Navbar } from "@/components/ui/navbar";
 
 const C = {
   bg: "#0B0B0F",
@@ -15,7 +15,7 @@ const sections = [
     id: "client-portal",
     eyebrow: "Client Portal",
     title: "Give clients a live window into your work.",
-    body: "Share a secure, always‑up‑to‑date portal instead of long email threads. Clients see what’s shipped, what’s in progress, and what’s next—without you writing a single status update.",
+    body: "Share a secure, always‑up‑to‑date portal instead of long email threads. Clients see what’s shipped, what’s in progress, and what’s next---without you writing a single status update.",
     bullets: [
       "Timeline view of every request and deliverable",
       "Approvals, comments, and files in one place",
@@ -207,4 +207,5 @@ export default function FeaturesPage() {
     </main>
   );
 }
+
 

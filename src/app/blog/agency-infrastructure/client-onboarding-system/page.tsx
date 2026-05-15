@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -24,16 +24,16 @@ const faqSchema = {
   "@context": "https://schema.org", "@type": "FAQPage",
   mainEntity: [
     { "@type": "Question", name: "What should a client onboarding process include for agencies?", acceptedAnswer: { "@type": "Answer", text: "A world-class agency client onboarding process should include: a pre-kickoff portal setup sent before the kickoff call, a structured kickoff covering communication protocols and approval workflows, a 'How we work together' PDF, a visible first deliverable within week one, and a 30-day pulse check call." } },
-    { "@type": "Question", name: "Why do agencies lose clients in the first 30 days?", acceptedAnswer: { "@type": "Answer", text: "70% of agencies who churn in the first 6 months do so because of onboarding failures — not delivery failures. Clients leave when their expectations were set incorrectly, their communication system is unclear, or they don't feel organized confidence from the agency in week one." } },
-    { "@type": "Question", name: "How does a client portal improve agency onboarding?", acceptedAnswer: { "@type": "Answer", text: "Sending a client their portal login before the kickoff call — with their project milestones already loaded — creates an immediate impression of a sophisticated, organized agency. Clients who log in to see their project ready before the first call begin the relationship with confidence rather than blank-slate uncertainty." } },
+    { "@type": "Question", name: "Why do agencies lose clients in the first 30 days?", acceptedAnswer: { "@type": "Answer", text: "70% of agencies who churn in the first 6 months do so because of onboarding failures --- not delivery failures. Clients leave when their expectations were set incorrectly, their communication system is unclear, or they don't feel organized confidence from the agency in week one." } },
+    { "@type": "Question", name: "How does a client portal improve agency onboarding?", acceptedAnswer: { "@type": "Answer", text: "Sending a client their portal login before the kickoff call --- with their project milestones already loaded --- creates an immediate impression of a sophisticated, organized agency. Clients who log in to see their project ready before the first call begin the relationship with confidence rather than blank-slate uncertainty." } },
   ],
 };
 
 const pillars = [
   { num: "01", title: "Pre-Kickoff Information Architecture", body: "Before the kickoff call happens, set up the client portal with their project milestones, assign them access, and share the login link with a short async video walkthrough. The client's first impression should be: these people are serious." },
-  { num: "02", title: "The Kickoff Call — What It Must Cover", body: "A kickoff call that doesn't set expectations for communication cadence, approval processes, and how the client will get updates has failed its primary purpose. Book it for 60 minutes. Use 10 to cover project scope, 50 to cover the operating agreement." },
+  { num: "02", title: "The Kickoff Call --- What It Must Cover", body: "A kickoff call that doesn't set expectations for communication cadence, approval processes, and how the client will get updates has failed its primary purpose. Book it for 60 minutes. Use 10 to cover project scope, 50 to cover the operating agreement." },
   { num: "03", title: "Communication Protocol Documentation", body: "Write down exactly how you communicate with clients: which channels, what response time SLAs, what the update frequency is, and how they request changes. Send it as a PDF after the kickoff. Clients who know how the machine works don't try to bypass it." },
-  { num: "04", title: "First-Milestone Delivery (Week 1 or 2)", body: "The fastest way to build client confidence is to deliver something early. Structure your projects so a visible deliverable can be published to the portal in week one. It doesn't have to be large — a client who sees 'Kickoff Complete ✅' on day 5 has proof the project is in motion." },
+  { num: "04", title: "First-Milestone Delivery (Week 1 or 2)", body: "The fastest way to build client confidence is to deliver something early. Structure your projects so a visible deliverable can be published to the portal in week one. It doesn't have to be large --- a client who sees 'Kickoff Complete ✅' on day 5 has proof the project is in motion." },
   { num: "05", title: "30-Day Retention Check", body: "At the 30-day mark, schedule a 20-minute 'pulse check' call. Ask two questions: 'Do you feel informed about your project's progress?' and 'Is there anything about how we communicate that you'd change?' This call catches churn signals before they become cancellations." },
 ];
 
@@ -42,7 +42,7 @@ const checklist = [
   "☐ Populate with project milestones (all named in client-readable language)",
   "☐ Send login link + 3-minute async Loom walkthrough of the portal",
   "☐ Schedule kickoff call (60 min minimum)",
-  "☐ Cover communication protocol in kickoff — channels, SLAs, update frequency",
+  "☐ Cover communication protocol in kickoff --- channels, SLAs, update frequency",
   "☐ Document and send 'How we work together' PDF post-kickoff",
   "☐ Deliver a visible first milestone within Week 1-2",
   "☐ Publish 'Kickoff Complete ✅' to portal immediately after kickoff call",
@@ -63,7 +63,7 @@ export default function ClientOnboardingSystem() {
           <span style={{ background: "linear-gradient(135deg, #34D399, #60A5FA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>That Retains Clients for Years</span>
         </h1>
         <p style={{ fontSize: 18, color: C.muted, lineHeight: 1.75, marginBottom: 28 }}>
-          Agency client onboarding is the structured process of transitioning a new client from signed contract to active, confident project participant — setting the expectations, communication systems, and visibility infrastructure that determine whether they stay for 6 months or 3 years.
+          Agency client onboarding is the structured process of transitioning a new client from signed contract to active, confident project participant --- setting the expectations, communication systems, and visibility infrastructure that determine whether they stay for 6 months or 3 years.
         </p>
         <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, color: "#555566" }}>
           <span>By Agency OS</span><span>·</span><span>March 30, 2026</span><span>·</span><span>10 min read</span>
@@ -75,7 +75,7 @@ export default function ClientOnboardingSystem() {
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>Why Most Agencies Have a Sales Process But No Onboarding System</h2>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>The First 30 Days Define a 12-Month Relationship</h3>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 16 }}>
-            70% of agency clients who churn in the first 6 months cite "didn't feel like the agency was organized" or "communication wasn't what I expected" as their primary reason. These are onboarding failures — not product or delivery failures. The client's expectations were set incorrectly from week one.
+            70% of agency clients who churn in the first 6 months cite "didn't feel like the agency was organized" or "communication wasn't what I expected" as their primary reason. These are onboarding failures --- not product or delivery failures. The client's expectations were set incorrectly from week one.
           </p>
           <div style={{ padding: 22, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, borderLeft: "3px solid #EF4444" }}>
             <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.8 }}>
@@ -101,7 +101,7 @@ export default function ClientOnboardingSystem() {
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>How the Client Portal Becomes the Foundation of Onboarding</h2>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Giving Clients a "Home" Before the Kickoff Call</h3>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 16 }}>
-            The most impactful change most agencies can make to their onboarding process is sending the portal login before the kickoff call — not after it. When a client opens their project portal and sees their name, their project milestones, and a note from their PM three days before the kickoff call, the impression is immediate: this is a professional, organized operation.
+            The most impactful change most agencies can make to their onboarding process is sending the portal login before the kickoff call --- not after it. When a client opens their project portal and sees their name, their project milestones, and a note from their PM three days before the kickoff call, the impression is immediate: this is a professional, organized operation.
           </p>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8 }}>
             For a complete guide to{" "}
@@ -125,7 +125,7 @@ export default function ClientOnboardingSystem() {
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>What a Great Onboarding System Makes Possible</h2>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>From Transactional Projects to Long-Term Retainers</h3>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 16 }}>
-            Clients convert from project-based to retainer-based relationships for one reason: they trust you. And trust is built in the first 60 days. An onboarding system that delivers visible progress, clear communication, and a premium experience lays the emotional and operational foundation for a 3-year relationship. The alternative — an unstructured, email-based start to the relationship — sets a ceiling on how deeply clients will invest with your agency.
+            Clients convert from project-based to retainer-based relationships for one reason: they trust you. And trust is built in the first 60 days. An onboarding system that delivers visible progress, clear communication, and a premium experience lays the emotional and operational foundation for a 3-year relationship. The alternative --- an unstructured, email-based start to the relationship --- sets a ceiling on how deeply clients will invest with your agency.
           </p>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8 }}>
             Pair a strong onboarding system with{" "}
@@ -137,7 +137,7 @@ export default function ClientOnboardingSystem() {
         </section>
 
         <div style={{ textAlign: "center", padding: "48px 32px", background: `radial-gradient(ellipse 60% 50% at 50% 50%, rgba(16,185,129,0.08), transparent 70%)`, border: `1px solid ${C.border}`, borderRadius: 20 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 20 }}>Start onboarding clients like a world-class agency — free.</h2>
+          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 20 }}>Start onboarding clients like a world-class agency --- free.</h2>
           <Link href="/signup" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 28px", background: C.accent, color: "#fff", fontWeight: 600, borderRadius: 12, textDecoration: "none", boxShadow: "0 0 24px rgba(91,92,246,0.35)" }}>
             Start free with Agency OS →
           </Link>
@@ -146,3 +146,4 @@ export default function ClientOnboardingSystem() {
     </main>
   );
 }
+

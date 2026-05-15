@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase/config";
+import { auth, db } from "@/lib/firebase/config";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import {
   User, Building2, CreditCard, Bell, Shield, LogOut,
@@ -44,21 +45,55 @@ export default function SettingsPage() {
   const { user, userData } = useAuth();
   const router = useRouter();
   const [agencyName, setAgencyName] = useState("My Agency");
+  const [savingName, setSavingName] = useState(false);
   const [savedName, setSavedName] = useState(false);
   const [notifUpdates, setNotifUpdates] = useState(true);
   const [notifMessages, setNotifMessages] = useState(true);
   const [notifOverdue, setNotifOverdue] = useState(true);
   const [timezone, setTimezone] = useState("Asia/Kolkata");
 
+  useEffect(() => {
+    if (!userData) return;
+    if (userData.agencyName?.trim()) {
+      setAgencyName(userData.agencyName.trim());
+      return;
+    }
+    const orgId = userData.organization_id;
+    if (!orgId) return;
+    getDoc(doc(db, "organizations", orgId))
+      .then((snap) => {
+        const name = snap.data()?.name as string | undefined;
+        if (name?.trim()) setAgencyName(name.trim());
+      })
+      .catch(() => {});
+  }, [userData?.agencyName, userData?.organization_id]);
+
   const handleSignOut = async () => {
     await signOut(auth);
     router.push("/login");
   };
 
-  const handleSaveName = () => {
-    setSavedName(true);
-    toast.success("Agency name updated!");
-    setTimeout(() => setSavedName(false), 2000);
+  const handleSaveName = async () => {
+    if (!user?.uid || !agencyName.trim()) return;
+    setSavingName(true);
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        agencyName: agencyName.trim(),
+      });
+      const orgId = userData?.organization_id;
+      if (orgId) {
+        await updateDoc(doc(db, "organizations", orgId), {
+          name: agencyName.trim(),
+        }).catch(() => {});
+      }
+      setSavedName(true);
+      toast.success("Agency name updated — sidebar will reflect it");
+      setTimeout(() => setSavedName(false), 2000);
+    } catch {
+      toast.error("Failed to save agency name");
+    } finally {
+      setSavingName(false);
+    }
   };
 
   const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
@@ -112,10 +147,21 @@ export default function SettingsPage() {
               className="flex-1 px-4 py-2.5 bg-[#131317] border border-[#1F1F2B] focus:border-[#5B5CF6]/50 focus:ring-1 focus:ring-[#5B5CF6]/30 rounded-xl text-sm text-white outline-none transition-all"
             />
             <button
+              type="button"
               onClick={handleSaveName}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${savedName ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-[#5B5CF6] hover:bg-[#4F50DB] text-white"}`}
+              disabled={savingName}
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-60 ${savedName ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-[#5B5CF6] hover:bg-[#4F50DB] text-white"}`}
             >
-              {savedName ? <><Check className="w-4 h-4 inline mr-1" />Saved</> : "Save"}
+              {savedName ? (
+                <>
+                  <Check className="w-4 h-4 inline mr-1" />
+                  Saved
+                </>
+              ) : savingName ? (
+                "Saving…"
+              ) : (
+                "Save"
+              )}
             </button>
           </div>
         </div>
@@ -172,7 +218,7 @@ export default function SettingsPage() {
             </div>
             <button className="flex items-center gap-1.5 px-4 py-2 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(91,92,246,0.2)]">
               <Sparkles className="w-3.5 h-3.5" />
-              Upgrade — $99/mo
+              Upgrade --- $99/mo
             </button>
           </div>
         </div>
@@ -207,3 +253,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

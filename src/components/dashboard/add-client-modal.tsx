@@ -10,11 +10,12 @@ import {
   Briefcase, Store, Bot, Star,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { addClient, addProject, addUpdate, getTeamMembers } from "@/lib/firebase/firestore";
+import { addClient, addProject, addUpdate, getTeamMembers, resolveOrganizationId } from "@/lib/firebase/firestore";
+import { notifyClientInviteEmail } from "@/lib/email/notify";
 import { toast } from "sonner";
 import type { TeamMember, Project } from "@/types";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ---
 
 const PROJECT_TYPES: { value: Project["type"]; label: string; icon: React.ElementType }[] = [
   { value: "website",  label: "Website",       icon: Globe },
@@ -66,7 +67,7 @@ const DEFAULT_MILESTONES = [
   "Launch",
 ];
 
-// ─── Next auto-schedule helper ────────────────────────────────────────────────
+// --- Next auto-schedule helper ---
 
 function calcNextUpdate(startDate: string, freq: string): string {
   const base = startDate ? new Date(startDate) : new Date();
@@ -77,7 +78,7 @@ function calcNextUpdate(startDate: string, freq: string): string {
   return next.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-// ─── Input helpers ────────────────────────────────────────────────────────────
+// --- Input helpers ---
 
 function Field({
   label, required, helper, icon: Icon, error, children,
@@ -116,7 +117,7 @@ const inputCls = (hasIcon = true) =>
 const selectCls = (hasIcon = true) =>
   `w-full bg-[#0D0D13] border border-[#1F1F2B] rounded-xl ${hasIcon ? "pl-10" : "pl-4"} pr-10 py-3 text-[13px] text-white focus:outline-none focus:border-[#5B5CF6] focus:ring-1 focus:ring-[#5B5CF6]/30 transition-all hover:border-[#2D2D3D] appearance-none cursor-pointer`;
 
-// ─── Step Indicator ───────────────────────────────────────────────────────────
+// --- Step Indicator ---
 
 function StepDot({ label, index, current, done }: {
   label: string; index: number; current: number; done: boolean;
@@ -140,7 +141,7 @@ function StepDot({ label, index, current, done }: {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// --- Main Component ---
 
 interface AddClientModalProps {
   isOpen: boolean;
@@ -203,7 +204,7 @@ const INITIAL: FormState = {
 
 export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModalProps) {
   const { userData } = useAuth();
-  const orgId = userData?.organization_id;
+  const orgId = resolveOrganizationId(userData);
 
   const [step, setStep] = useState<Step>(0);
   const [form, setForm] = useState<FormState>(INITIAL);
@@ -243,7 +244,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
   const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm(prev => ({ ...prev, [key]: val }));
 
-  // ── Validation ──────────────────────────────────────────────────────────────
+  // --- Validation ---
 
   const validateStep = (s: Step): boolean => {
     const errs: FormErrors = {};
@@ -265,7 +266,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
     setStep(prev => (prev + 1) as Step);
   };
 
-  // ── Submit ──────────────────────────────────────────────────────────────────
+  // --- Submit ---
 
   const handleSubmit = async () => {
     if (!validateStep(2)) return;
@@ -323,6 +324,13 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
         next: ["Initial discovery call", "Brief & proposal review"],
       });
 
+      const inviteSent = await notifyClientInviteEmail(clientRef.id);
+      if (!inviteSent) {
+        toast("Client created — invite email not sent", {
+          description: "Set GMAIL_USER and GMAIL_APP_PASSWORD in .env.local",
+        });
+      }
+
       setCreatedInfo({ clientName: form.clientName.trim(), projectName: form.projectName.trim() });
       setSuccess(true);
       onClientAdded?.();
@@ -334,7 +342,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
     }
   };
 
-  // ── Success Screen ──────────────────────────────────────────────────────────
+  // --- Success Screen ---
 
   if (success && createdInfo) {
     const nextUpdateDate = calcNextUpdate(form.startDate, form.updateFrequency);
@@ -389,7 +397,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
     );
   }
 
-  // ── Form ────────────────────────────────────────────────────────────────────
+  // --- Form ---
 
   const STEPS = ["Client", "Project", "Setup"];
   const isLast = step === 2;
@@ -405,7 +413,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
         {/* Ambient glow */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#5B5CF6]/8 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
-        {/* ── Header ────────────────────────────────────────────── */}
+        {/* --- Header --- */}
         <div className="relative z-10 px-7 pt-7 pb-5 border-b border-[#1A1A24] flex-shrink-0">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-3.5">
@@ -443,7 +451,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
           </div>
         </div>
 
-        {/* ── Body ──────────────────────────────────────────────── */}
+        {/* --- Body --- */}
         <div className="relative z-10 overflow-y-auto flex-1 px-7 py-6">
 
           {/* ══════════════════════════════════════════════════════
@@ -452,7 +460,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
           {step === 0 && (
             <div className="space-y-5 animate-fade-in">
               <p className="text-[13px] text-[#6B7280] leading-relaxed -mt-1 mb-1">
-                Start with the basics — who is this client, and how do you reach them?
+                Start with the basics --- who is this client, and how do you reach them?
               </p>
 
               <Field label="Client Name" required icon={User} error={errors.clientName}>
@@ -772,7 +780,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
                 >
                   <option value="">Unassigned</option>
                   {teamMembers.map(m => (
-                    <option key={m.id} value={m.id}>{m.name} — {m.role}</option>
+                    <option key={m.id} value={m.id}>{m.name} --- {m.role}</option>
                   ))}
                 </select>
                 <ChevronDown className="w-4 h-4 text-[#3D3D4D] absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -801,12 +809,12 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
               <div className="bg-[#0D0D13] border border-[#1F1F2B] rounded-2xl p-4 space-y-2.5">
                 <p className="text-[10px] font-bold text-[#3D3D4D] uppercase tracking-widest mb-3">Summary</p>
                 {[
-                  { label: "Client",     value: form.clientName || "—" },
-                  { label: "Type",       value: CLIENT_TYPES.find(t => t.value === form.clientType)?.label || "—" },
-                  { label: "Contact",    value: CONTACT_METHODS.find(c => c.value === form.contactMethod)?.label || "—" },
-                  { label: "Project",    value: form.projectName || "—" },
+                  { label: "Client",     value: form.clientName || "---" },
+                  { label: "Type",       value: CLIENT_TYPES.find(t => t.value === form.clientType)?.label || "---" },
+                  { label: "Contact",    value: CONTACT_METHODS.find(c => c.value === form.contactMethod)?.label || "---" },
+                  { label: "Project",    value: form.projectName || "---" },
                   { label: "Frequency",  value: form.updateFrequency },
-                  { label: "Anxiety",    value: ANXIETY_LEVELS.find(a => a.value === form.anxietyLevel)?.label || "—" },
+                  { label: "Anxiety",    value: ANXIETY_LEVELS.find(a => a.value === form.anxietyLevel)?.label || "---" },
                   { label: "Next Update", value: nextUpdatePreview },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex items-center justify-between text-[12px]">
@@ -819,7 +827,7 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
           )}
         </div>
 
-        {/* ── Footer ────────────────────────────────────────────── */}
+        {/* --- Footer --- */}
         <div className="relative z-10 px-7 py-5 border-t border-[#1A1A24] flex items-center justify-between gap-3 flex-shrink-0 bg-[#0A0A10]">
           <button
             onClick={step === 0 ? onClose : () => setStep(prev => (prev - 1) as Step)}
@@ -866,3 +874,4 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -12,7 +12,7 @@ import type { TeamMember, TeamRole } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { getTeamMembers } from "@/lib/firebase/firestore";
 
-// ─── Config ──────────────────────────────────────────────
+// --- Config ---
 const ROLE_CONFIG: Record<TeamRole, { label: string; icon: any; color: string; bg: string }> = {
   owner: { label: "Owner", icon: Crown, color: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/20" },
   admin: { label: "Admin", icon: Shield, color: "text-[#5B5CF6]", bg: "bg-[#5B5CF6]/10 border-[#5B5CF6]/20" },
@@ -45,7 +45,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   done: { label: "Done", color: "text-emerald-400" },
 };
 
-// ─── Invite Modal ─────────────────────────────────────────
+// --- Invite Modal ---
 function InviteModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<TeamRole>("member");
@@ -146,7 +146,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────
+// --- Main Page ---
 export default function TeamPage() {
   const { userData } = useAuth();
   const orgId = userData?.organization_id;
@@ -334,3 +334,4 @@ export default function TeamPage() {
     </div>
   );
 }
+

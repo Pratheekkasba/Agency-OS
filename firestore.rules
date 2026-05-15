@@ -2,66 +2,100 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ─── Helper: check user belongs to the org of this doc ───────────────
     function belongsToOrg(orgId) {
       return request.auth != null
-        && request.auth.token.organization_id == orgId;
+        && (
+          request.auth.token.organization_id == orgId
+          || request.auth.uid == orgId
+        );
     }
 
-    // ─── Users ────────────────────────────────────────────────────────────
-    // A user can only read/write their own profile doc
+    function canWriteToOrg(orgId) {
+      return request.auth != null
+        && (
+          request.auth.token.organization_id == orgId
+          || request.auth.uid == orgId
+        );
+    }
+
+    function isClientRole() {
+      return request.auth != null && request.auth.token.role == 'client';
+    }
+
+    function clientOwnsClientDoc(clientId) {
+      return !isClientRole()
+        || (request.auth.token.client_id != null
+            && request.auth.token.client_id == clientId);
+    }
+
+    function clientOwnsResource() {
+      return !isClientRole()
+        || (request.auth.token.client_id != null
+            && resource.data.clientId == request.auth.token.client_id);
+    }
+
     match /users/{userId} {
       allow read, write: if request.auth != null
         && request.auth.uid == userId;
     }
 
-    // ─── Organizations ────────────────────────────────────────────────────
-    // Members can only read their own org; no client-side writes allowed
     match /organizations/{orgId} {
       allow read: if belongsToOrg(orgId);
-      allow write: if false; // Only Admin SDK (server-side) may write orgs
+      allow write: if false;
     }
 
-    // ─── Clients ─────────────────────────────────────────────────────────
     match /clients/{clientId} {
-      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
-      allow create: if request.auth != null
-        && request.auth.token.organization_id == request.resource.data.organization_id;
+      allow read: if belongsToOrg(resource.data.organization_id)
+        && clientOwnsClientDoc(clientId);
+      allow update, delete: if canWriteToOrg(resource.data.organization_id)
+        && !isClientRole();
+      allow create: if canWriteToOrg(request.resource.data.organization_id)
+        && !isClientRole();
     }
 
-    // ─── Projects ────────────────────────────────────────────────────────
     match /projects/{projectId} {
-      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
-      allow create: if request.auth != null
-        && request.auth.token.organization_id == request.resource.data.organization_id;
+      allow read: if belongsToOrg(resource.data.organization_id)
+        && clientOwnsResource();
+      allow update, delete: if canWriteToOrg(resource.data.organization_id)
+        && !isClientRole();
+      allow create: if canWriteToOrg(request.resource.data.organization_id)
+        && !isClientRole();
     }
 
-    // ─── Tasks ───────────────────────────────────────────────────────────
     match /tasks/{taskId} {
-      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
-      allow create: if request.auth != null
-        && request.auth.token.organization_id == request.resource.data.organization_id;
+      allow read: if belongsToOrg(resource.data.organization_id)
+        && clientOwnsResource();
+      allow update, delete: if canWriteToOrg(resource.data.organization_id)
+        && !isClientRole();
+      allow create: if canWriteToOrg(request.resource.data.organization_id)
+        && !isClientRole();
     }
 
-    // ─── Messages ────────────────────────────────────────────────────────
     match /messages/{messageId} {
-      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
-      allow create: if request.auth != null
-        && request.auth.token.organization_id == request.resource.data.organization_id;
+      allow read: if belongsToOrg(resource.data.organization_id)
+        && clientOwnsResource();
+      allow update, delete: if canWriteToOrg(resource.data.organization_id)
+        && !isClientRole();
+      allow create: if canWriteToOrg(request.resource.data.organization_id)
+        && !isClientRole();
     }
 
-    // ─── Updates ─────────────────────────────────────────────────────────
     match /updates/{updateId} {
-      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
-      allow create: if request.auth != null
-        && request.auth.token.organization_id == request.resource.data.organization_id;
+      allow read: if belongsToOrg(resource.data.organization_id)
+        && clientOwnsResource();
+      allow update, delete: if canWriteToOrg(resource.data.organization_id)
+        && !isClientRole();
+      allow create: if canWriteToOrg(request.resource.data.organization_id)
+        && !isClientRole();
     }
 
-    // ─── Whiteboards ─────────────────────────────────────────────────────
     match /whiteboards/{whiteboardId} {
-      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
-      allow create: if request.auth != null
-        && request.auth.token.organization_id == request.resource.data.organization_id;
+      allow read: if belongsToOrg(resource.data.organization_id)
+        && clientOwnsResource();
+      allow update, delete: if canWriteToOrg(resource.data.organization_id)
+        && !isClientRole();
+      allow create: if canWriteToOrg(request.resource.data.organization_id)
+        && !isClientRole();
     }
   }
 }

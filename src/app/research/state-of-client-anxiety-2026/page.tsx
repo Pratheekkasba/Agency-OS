@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus, PlayCircle } from "lucide-react";
 
@@ -49,7 +49,7 @@ export default function StateOfClientAnxietyReport() {
         
         <div style={{ maxWidth: "800px", margin: "0 auto", position: "relative", zIndex: 1 }}>
           <div style={{ display: "inline-block", background: C.highlight, border: `1px solid ${C.primary}`, color: C.primary, padding: "0.25rem 0.75rem", borderRadius: "9999px", fontSize: "0.875rem", fontWeight: 600, marginBottom: "1.5rem" }}>
-            ORIGINAL RESEARCH — 2026 DATA
+            ORIGINAL RESEARCH --- 2026 DATA
           </div>
           <h1 style={{ fontSize: "3.5rem", fontWeight: 800, letterSpacing: "-0.04em", lineHeight: 1.1, marginBottom: "1.5rem" }}>
             The 2026 State of Agency Client Anxiety
@@ -148,3 +148,4 @@ export default function StateOfClientAnxietyReport() {
     </main>
   );
 }
+

@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "The Best Client Communication Tools for Agencies in 2026 (Ranked)",
-  description: "From proactive update portals to real-time chat — the best client communication tools for agencies ranked by what actually drives client retention and referral rates.",
+  description: "From proactive update portals to real-time chat --- the best client communication tools for agencies ranked by what actually drives client retention and referral rates.",
   keywords: ["client communication tools for agencies", "agency client communication software", "centralize client messages", "client messaging platform"],
   alternates: { canonical: "https://agency-os.tech/blog/agency-infrastructure/client-communication-tools" },
   openGraph: { title: "The Best Client Communication Tools for Agencies in 2026 (Ranked)", url: "https://agency-os.tech/blog/agency-infrastructure/client-communication-tools", type: "article" },
@@ -23,8 +23,8 @@ const articleSchema = {
 const faqSchema = {
   "@context": "https://schema.org", "@type": "FAQPage",
   mainEntity: [
-    { "@type": "Question", name: "What is the best client communication tool for agencies?", acceptedAnswer: { "@type": "Answer", text: "Agency OS is the best proactive client communication tool for agencies in 2026. It combines a structured client portal, AI inbox triage, and milestone approvals into a single system — replacing the reactive email-and-Slack model with always-on structured visibility." } },
-    { "@type": "Question", name: "Why do most agency clients cancel due to communication issues?", acceptedAnswer: { "@type": "Answer", text: "67% of agency clients cite 'lack of communication' as their primary reason for leaving. The root cause is information asymmetry — clients feel uninformed between updates, and that anxiety erodes trust regardless of the quality of the work being delivered." } },
+    { "@type": "Question", name: "What is the best client communication tool for agencies?", acceptedAnswer: { "@type": "Answer", text: "Agency OS is the best proactive client communication tool for agencies in 2026. It combines a structured client portal, AI inbox triage, and milestone approvals into a single system --- replacing the reactive email-and-Slack model with always-on structured visibility." } },
+    { "@type": "Question", name: "Why do most agency clients cancel due to communication issues?", acceptedAnswer: { "@type": "Answer", text: "67% of agency clients cite 'lack of communication' as their primary reason for leaving. The root cause is information asymmetry --- clients feel uninformed between updates, and that anxiety erodes trust regardless of the quality of the work being delivered." } },
     { "@type": "Question", name: "Should I use Slack to communicate with clients?", acceptedAnswer: { "@type": "Answer", text: "Slack is good for real-time informal communication but fails as a primary client update channel. Messages are buried, unstructured, and impossible to audit. Use it for quick Q&A, but not for milestone updates, approvals, or progress reporting." } },
   ],
 };
@@ -34,7 +34,7 @@ const tools = [
   { rank: "#2", name: "Slack", badge: "Best for Real-Time Conversational Communication", color: "#4A154B", why: "Excellent for quick, informal back-and-forth with clients who are comfortable with chat tools. Fails for formal updates because messages are buried, unstructured, and impossible to audit." },
   { rank: "#3", name: "Loom", badge: "Best for Asynchronous Visual Updates", color: "#625DF5", why: "Record a 3-minute walkthrough of a deliverable instead of writing a 300-word email. High-impact for creative agencies. No approval or milestone tracking." },
   { rank: "#4", name: "Notion", badge: "Best for Documentation-Heavy Client Relationships", color: "#374151", why: "Works well as a shared knowledge base or project brief repository. Poorly suited as a client portal due to permission complexity and security risks." },
-  { rank: "#5", name: "Email", badge: "The Baseline — But Not the Ceiling", color: "#9CA3AF", why: "Every agency uses it. Most agencies rely on it too much. Email is synchronous, unstructured, and creates information asymmetry by design. Build toward eliminating it as your primary update channel." },
+  { rank: "#5", name: "Email", badge: "The Baseline --- But Not the Ceiling", color: "#9CA3AF", why: "Every agency uses it. Most agencies rely on it too much. Email is synchronous, unstructured, and creates information asymmetry by design. Build toward eliminating it as your primary update channel." },
 ];
 
 export default function ClientCommunicationTools() {
@@ -50,7 +50,7 @@ export default function ClientCommunicationTools() {
           <span style={{ background: "linear-gradient(135deg, #34D399, #60A5FA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>2026 (Ranked)</span>
         </h1>
         <p style={{ fontSize: 18, color: C.muted, lineHeight: 1.75, marginBottom: 28 }}>
-          Client communication tools sit at the critical intersection of project management and client relationship management — and the wrong tool creates chaos while the right one becomes the single reason clients renew retainers.
+          Client communication tools sit at the critical intersection of project management and client relationship management --- and the wrong tool creates chaos while the right one becomes the single reason clients renew retainers.
         </p>
         <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, color: "#555566" }}>
           <span>By Agency OS</span><span>·</span><span>March 30, 2026</span><span>·</span><span>10 min read</span>
@@ -61,7 +61,7 @@ export default function ClientCommunicationTools() {
         <section style={{ marginBottom: 48 }}>
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>Why Client Communication Is the #1 Retention Driver for Agencies</h2>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 16 }}>
-            Research consistently shows that agency churn is driven not by bad work — but by bad communication. Clients who feel informed stay. Clients who don't leave and tell others why.
+            Research consistently shows that agency churn is driven not by bad work --- but by bad communication. Clients who feel informed stay. Clients who don't leave and tell others why.
           </p>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Data: What Clients Actually Complain About</h3>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -144,3 +144,4 @@ export default function ClientCommunicationTools() {
     </main>
   );
 }
+

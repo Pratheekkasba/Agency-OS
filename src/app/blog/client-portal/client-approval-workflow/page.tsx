@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -30,7 +30,7 @@ const faqSchema = {
 };
 
 const stages = [
-  { num: "01", title: "Milestone Scoping and Definition", body: "Before the project begins, define every deliverable with a clear, client-readable name. Not 'Sprint 3 backend tasks' — 'Payment Processing Integration Complete'. Clients approve what they understand." },
+  { num: "01", title: "Milestone Scoping and Definition", body: "Before the project begins, define every deliverable with a clear, client-readable name. Not 'Sprint 3 backend tasks' --- 'Payment Processing Integration Complete'. Clients approve what they understand." },
   { num: "02", title: "Deliverable Upload and Presentation", body: "When a milestone is ready, upload the deliverable to the portal and write a 3-sentence description of what was built, what decision it enables, and what comes next." },
   { num: "03", title: "Structured Feedback Collection", body: "Set a 48-hour feedback window. The client leaves feedback inside the portal (not via email). This keeps all feedback in one place and creates a record." },
   { num: "04", title: "Digital Sign-Off with Timestamp", body: "The client clicks 'Approve'. The portal records their name, timestamp, and IP address. This is your protection against 'I never approved that' scope creep." },
@@ -50,7 +50,7 @@ export default function ClientApprovalWorkflow() {
           <span style={{ background: "linear-gradient(135deg, #818CF8, #C084FC)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>That Prevents Scope Creep</span>
         </h1>
         <p style={{ fontSize: 18, color: C.muted, lineHeight: 1.75, marginBottom: 28 }}>
-          A client approval workflow is a formalized sequence of review, feedback, and digital sign-off events that creates a timestamped audit trail for each deliverable — protecting agencies from scope creep disputes and giving clients the psychological closure that accelerates project momentum.
+          A client approval workflow is a formalized sequence of review, feedback, and digital sign-off events that creates a timestamped audit trail for each deliverable --- protecting agencies from scope creep disputes and giving clients the psychological closure that accelerates project momentum.
         </p>
         <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, color: "#555566" }}>
           <span>By Agency OS</span><span>·</span><span>March 30, 2026</span><span>·</span><span>8 min read</span>
@@ -92,14 +92,14 @@ export default function ClientApprovalWorkflow() {
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>How to Communicate the Approval Process to Clients</h2>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Setting Expectations During Onboarding</h3>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 24 }}>
-            The approval workflow should be explained during onboarding contracts and the kickoff call — not introduced mid-project when a milestone is ready. Build it into your{" "}
+            The approval workflow should be explained during onboarding contracts and the kickoff call --- not introduced mid-project when a milestone is ready. Build it into your{" "}
             <Link href="/blog/agency-infrastructure/client-onboarding-system" style={{ color: C.primary, textDecoration: "underline" }}>client onboarding system</Link>
             {" "}from day one.
           </p>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>The Language That Prevents Revision Spirals</h3>
           <div style={{ padding: 24, background: C.surface, border: `1px solid rgba(91,92,246,0.3)`, borderRadius: 16, borderLeft: `3px solid ${C.primary}` }}>
             <p style={{ fontSize: 14, color: C.muted, lineHeight: 1.8, fontStyle: "italic" }}>
-              "Once you approve a milestone in the portal, that phase is locked and we advance to the next sprint. Any changes to approved work require a change order. This protects both of us — you get clarity on exactly what you're getting, and we can deliver it on schedule."
+              "Once you approve a milestone in the portal, that phase is locked and we advance to the next sprint. Any changes to approved work require a change order. This protects both of us --- you get clarity on exactly what you're getting, and we can deliver it on schedule."
             </p>
           </div>
         </section>
@@ -126,3 +126,4 @@ export default function ClientApprovalWorkflow() {
     </main>
   );
 }
+

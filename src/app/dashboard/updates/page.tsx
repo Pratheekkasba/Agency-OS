@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getAllClients, getTasksByClient } from "@/lib/firebase/firestore";
+import { addUpdate, getAllClients, getTasksByClient } from "@/lib/firebase/firestore";
+import { notifyClientUpdateEmail } from "@/lib/email/notify";
 import { Sparkles, ChevronDown, Check, Copy, Pencil, RefreshCw } from "lucide-react";
 import type { Client } from "@/types";
 import { toast } from "sonner";
@@ -179,14 +180,44 @@ export default function UpdatesPage() {
     setNextText("");
   };
 
-  const handleSend = () => {
-    if (!livePreviewText) return;
+  const handleSend = async () => {
+    if (!selectedClient || !userData?.organization_id || !hasContent) return;
     setIsSending(true);
-    setTimeout(() => {
-      setIsSending(false);
-      toast.success("Update sent successfully");
+    try {
+      const done = parseLines(doneText);
+      const inProgress = parseLines(inProgressText);
+      const next = parseLines(nextText);
+
+      await addUpdate({
+        organization_id: userData.organization_id,
+        clientId: selectedClient.id,
+        done,
+        inProgress,
+        next,
+        generatedMessage: livePreviewText,
+      });
+
+      const emailed = await notifyClientUpdateEmail({
+        clientId: selectedClient.id,
+        done,
+        inProgress,
+        next,
+        projectName: selectedClient.projectName,
+        progress: selectedClient.progress,
+      });
+
+      if (emailed) {
+        toast.success("Update published and client notified by email");
+      } else {
+        toast.success("Update published — portal updated (email not sent)");
+      }
       handleClear();
-    }, 1500);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to publish update");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleCopy = () => {

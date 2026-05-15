@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
@@ -20,13 +20,13 @@ const silos = [
         href: "/blog/client-portal/client-portal-software",
         title: "The 7 Best Client Portal Software Platforms for Agencies in 2026",
         excerpt:
-          "A ranked comparison of agency-grade client portal software — covering features, pricing, and which tools are actually built for client-facing work.",
+          "A ranked comparison of agency-grade client portal software --- covering features, pricing, and which tools are actually built for client-facing work.",
         keyword: "best client portal software for agencies 2026",
         readTime: "10 min",
       },
       {
         href: "/blog/client-portal/client-portal-vs-email",
-        title: "Client Portal vs. Email Updates — Why Agencies Are Switching in 2026",
+        title: "Client Portal vs. Email Updates --- Why Agencies Are Switching in 2026",
         excerpt:
           "The hidden cost of weekly status emails, why clients keep asking 'what's the status?', and how a portal fixes the root cause permanently.",
         keyword: "replace client email updates with portal",
@@ -34,7 +34,7 @@ const silos = [
       },
       {
         href: "/blog/client-portal/white-label-client-portal",
-        title: "White-Label Client Portal Software — The Agency's Competitive Edge in 2026",
+        title: "White-Label Client Portal Software --- The Agency's Competitive Edge in 2026",
         excerpt:
           "How a custom-domain, white-label client portal commands premium pricing and reduces churn by up to 40%.",
         keyword: "white label client portal software",
@@ -56,7 +56,7 @@ const silos = [
     posts: [
       {
         href: "/blog/agency-infrastructure/agency-management-software",
-        title: "Agency Management Software — The Definitive 2026 Buyer's Guide",
+        title: "Agency Management Software --- The Definitive 2026 Buyer's Guide",
         excerpt:
           "The 7 core functions every agency management platform must cover, and why most tools only solve half the problem.",
         keyword: "agency management software",
@@ -66,7 +66,7 @@ const silos = [
         href: "/blog/agency-infrastructure/client-communication-tools",
         title: "The Best Client Communication Tools for Agencies in 2026 (Ranked)",
         excerpt:
-          "From proactive update systems to real-time chat — ranked by what actually drives client retention and referral rates.",
+          "From proactive update systems to real-time chat --- ranked by what actually drives client retention and referral rates.",
         keyword: "client communication tools for agencies",
         readTime: "10 min",
       },
@@ -80,7 +80,7 @@ const silos = [
       },
       {
         href: "/blog/agency-infrastructure/agency-project-visibility",
-        title: "Agency Project Visibility — How to Give Clients Clarity Without Giving Them Access to Everything",
+        title: "Agency Project Visibility --- How to Give Clients Clarity Without Giving Them Access to Everything",
         excerpt:
           "The internal vs. external view architecture, and how to give clients the right grain of detail without exposing your internal chaos.",
         keyword: "agency project visibility for clients",
@@ -280,3 +280,4 @@ export default function BlogIndex() {
     </main>
   );
 }
+

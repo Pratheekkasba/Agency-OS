@@ -1,19 +1,19 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Agency Project Visibility — Give Clients Clarity Without Exposing Your Internal Chaos",
+  title: "Agency Project Visibility --- Give Clients Clarity Without Exposing Your Internal Chaos",
   description: "The internal vs. external view architecture, and how to give clients the right grain of project detail without exposing your internal tool complexity to external stakeholders.",
   keywords: ["agency project visibility for clients", "client-facing project updates", "internal vs external project view agency", "what to show clients about projects"],
   alternates: { canonical: "https://agency-os.tech/blog/agency-infrastructure/agency-project-visibility" },
-  openGraph: { title: "Agency Project Visibility — Give Clients Clarity Without Exposing Your Internal Chaos", url: "https://agency-os.tech/blog/agency-infrastructure/agency-project-visibility", type: "article" },
+  openGraph: { title: "Agency Project Visibility --- Give Clients Clarity Without Exposing Your Internal Chaos", url: "https://agency-os.tech/blog/agency-infrastructure/agency-project-visibility", type: "article" },
 };
 
 const C = { bg: "#0B0B0F", surface: "#12121A", border: "#1F1F2B", muted: "#9CA3AF", primary: "#10b981", accent: "#5B5CF6" };
 
 const articleSchema = {
   "@context": "https://schema.org", "@type": "Article",
-  headline: "Agency Project Visibility — Give Clients Clarity Without Giving Them Access to Everything",
+  headline: "Agency Project Visibility --- Give Clients Clarity Without Giving Them Access to Everything",
   image: "https://agency-os.tech/og-image.png",
   author: { "@type": "Organization", name: "Agency OS", url: "https://agency-os.tech" },
   publisher: { "@id": "https://agency-os.tech/#organization" },
@@ -25,24 +25,24 @@ const faqSchema = {
   mainEntity: [
     { "@type": "Question", name: "What should clients be able to see about their project?", acceptedAnswer: { "@type": "Answer", text: "Clients should see outcome-level and phase-level visibility: what was delivered, what phase is currently active, and what comes next. They should not see internal subtasks, team conversations, technical blockers, or anything that requires context to interpret correctly." } },
     { "@type": "Question", name: "What happens when you give clients too much project access?", acceptedAnswer: { "@type": "Answer", text: "When clients see your internal task board, they experience information overload, interpret internal blockers as project risks, see jargon they can't understand, and may accidentally access sensitive data like your margin calculations or team rates." } },
-    { "@type": "Question", name: "How does Agency OS separate internal and client-facing views?", acceptedAnswer: { "@type": "Answer", text: "Agency OS uses a dual-layer architecture. Your team works in the internal dashboard with full task and communication access. Clients see only a curated portal view you control — structurally separated so there is no risk of accidental data exposure." } },
+    { "@type": "Question", name: "How does Agency OS separate internal and client-facing views?", acceptedAnswer: { "@type": "Answer", text: "Agency OS uses a dual-layer architecture. Your team works in the internal dashboard with full task and communication access. Clients see only a curated portal view you control --- structurally separated so there is no risk of accidental data exposure." } },
   ],
 };
 
 export default function AgencyProjectVisibility() {
   return (
     <main style={{ background: C.bg, color: "#fff", minHeight: "100vh" }}>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Article", headline: "Agency Project Visibility — Give Clients Clarity Without Exposing Your Internal Chaos", author: { "@type": "Organization", name: "Agency OS" }, publisher: { "@id": "https://agency-os.tech/#organization" }, datePublished: "2026-03-30", mainEntityOfPage: { "@type": "WebPage", "@id": "https://agency-os.tech/blog/agency-infrastructure/agency-project-visibility" } }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Article", headline: "Agency Project Visibility --- Give Clients Clarity Without Exposing Your Internal Chaos", author: { "@type": "Organization", name: "Agency OS" }, publisher: { "@id": "https://agency-os.tech/#organization" }, datePublished: "2026-03-30", mainEntityOfPage: { "@type": "WebPage", "@id": "https://agency-os.tech/blog/agency-infrastructure/agency-project-visibility" } }) }} />
 
       <header style={{ maxWidth: 780, margin: "0 auto", padding: "72px 24px 48px" }}>
         <Link href="/blog" style={{ fontSize: 13, color: C.muted, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 32 }}>← All posts</Link>
         <div style={{ display: "inline-flex", padding: "4px 12px", borderRadius: 999, background: `${C.primary}15`, border: `1px solid ${C.primary}30`, color: C.primary, fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, marginBottom: 20 }}>Agency Infrastructure Ops</div>
         <h1 style={{ fontSize: "clamp(1.9rem, 4.5vw, 2.6rem)", fontWeight: 700, lineHeight: 1.2, letterSpacing: "-0.03em", marginBottom: 20 }}>
-          Agency Project Visibility —{" "}
+          Agency Project Visibility ---{" "}
           <span style={{ background: "linear-gradient(135deg, #34D399, #60A5FA)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Give Clients Clarity Without Giving Them Access to Everything</span>
         </h1>
         <p style={{ fontSize: 18, color: C.muted, lineHeight: 1.75, marginBottom: 28 }}>
-          Agency project visibility is the practice of deliberately curating the level of project detail that clients can see — giving them enough information to feel informed and confident, without exposing the operational complexity that would create confusion, anxiety, or micro-management.
+          Agency project visibility is the practice of deliberately curating the level of project detail that clients can see --- giving them enough information to feel informed and confident, without exposing the operational complexity that would create confusion, anxiety, or micro-management.
         </p>
         <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, color: "#555566" }}>
           <span>By Agency OS</span><span>·</span><span>March 30, 2026</span><span>·</span><span>8 min read</span>
@@ -88,7 +88,7 @@ export default function AgencyProjectVisibility() {
         </section>
 
         <section style={{ marginBottom: 48 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>The "Right Grain" Principle — How Much Detail Is Too Much?</h2>
+          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>The "Right Grain" Principle --- How Much Detail Is Too Much?</h2>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>The 3-Level Visibility Framework</h3>
           {[
             { level: "Level 1: Outcome Visibility", description: "What the client paid for. 'Your new website is 60% complete.' No detail about how.", color: C.accent },
@@ -112,11 +112,11 @@ export default function AgencyProjectVisibility() {
         <section style={{ marginBottom: 48 }}>
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 16 }}>How Agency OS Enforces Visibility Partitioning</h2>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8, marginBottom: 16 }}>
-            Agency OS uses a dual-layer architecture: your team works in the internal dashboard (with access to all task detail, communication history, and client metadata), while clients see only a curated portal view that you control. No accidental exposure of internal data — because the two surfaces are structurally separated.
+            Agency OS uses a dual-layer architecture: your team works in the internal dashboard (with access to all task detail, communication history, and client metadata), while clients see only a curated portal view that you control. No accidental exposure of internal data --- because the two surfaces are structurally separated.
           </p>
           <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>Connecting Visibility to Approvals</h3>
           <p style={{ fontSize: 16, color: C.muted, lineHeight: 1.8 }}>
-            Phase-level visibility works best when paired with phase-level approvals. When a client sees that Design is complete, they can approve it in one click — advancing the project cleanly. For the full approval workflow framework, see our guide to{" "}
+            Phase-level visibility works best when paired with phase-level approvals. When a client sees that Design is complete, they can approve it in one click --- advancing the project cleanly. For the full approval workflow framework, see our guide to{" "}
             <Link href="/blog/client-portal/client-approval-workflow" style={{ color: C.accent, textDecoration: "underline" }}>building a milestone-based client approval workflow</Link>.
           </p>
         </section>
@@ -140,3 +140,4 @@ export default function AgencyProjectVisibility() {
     </main>
   );
 }
+

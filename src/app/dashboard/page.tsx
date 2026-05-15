@@ -14,7 +14,6 @@ import {
   Users,
   Sparkles,
   Zap,
-  AlertTriangle,
   ChevronRight,
   Send,
 } from "lucide-react";
@@ -22,10 +21,10 @@ import { AddClientModal } from "@/components/dashboard/add-client-modal";
 import { ClientSettingsPanel } from "@/components/dashboard/client-settings-panel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/context/AuthContext";
-import { getAllClients, getUpdates } from "@/lib/firebase/firestore";
+import { getAllClients, getUpdates, resolveOrganizationId } from "@/lib/firebase/firestore";
 import { toast } from "sonner";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// --- helpers ---
 
 function getDaysSinceUpdate(dateString: string) {
   if (!dateString) return Infinity;
@@ -97,7 +96,7 @@ function Sparkline({ count }: { count: number }) {
   );
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+// --- Component ---
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -122,7 +121,7 @@ export default function DashboardPage() {
   };
 
   const fetchData = useCallback(async () => {
-    const orgId = userData?.organization_id;
+    const orgId = resolveOrganizationId(userData);
     if (!orgId) return;
     setIsLoading(true);
     try {
@@ -147,27 +146,12 @@ export default function DashboardPage() {
     setIsSettingsOpen(true);
   };
 
-  // ── Derived data ──────────────────────────────────────────────────────────
+  // --- Derived data ---
 
   const pendingClients = clients.filter(
     (c) => isNeedsUpdate(c.lastUpdateDate) && c.status !== "Paused"
   );
   const pendingUpdatesCount = pendingClients.length;
-
-  // Names for alert bar (first 2 + overflow)
-  const alertNames = pendingClients
-    .slice(0, 2)
-    .map((c) => c.name.split(" ")[0])
-    .join(", ");
-  const overflow = pendingUpdatesCount > 2 ? ` +${pendingUpdatesCount - 2} more` : "";
-  const alertLabel = pendingUpdatesCount > 0 ? `${alertNames}${overflow} need updates` : "";
-
-  // Urgency for banner – worst case
-  const maxDays = pendingClients.reduce(
-    (m, c) => Math.max(m, getDaysSinceUpdate(c.lastUpdateDate)),
-    0
-  );
-  const bannerIsRed = maxDays >= 3;
 
   // Avg delay for "Needs Update" card
   const avgDelay =
@@ -196,60 +180,13 @@ export default function DashboardPage() {
       return dateA - dateB;
     });
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // --- Render ---
 
   return (
     <div className="h-full overflow-y-auto p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
 
-      {/* ── 1. Actionable Urgency Banner ─────────────────────────────────── */}
-      {!isLoading && pendingUpdatesCount > 0 && (
-        <div
-          className={`rounded-xl p-4 flex items-center justify-between gap-4 animate-fade-in border ${
-            bannerIsRed
-              ? "bg-[#EF4444]/10 border-[#EF4444]/25 shadow-[0_0_20px_rgba(239,68,68,0.08)]"
-              : "bg-[#F59E0B]/10 border-[#F59E0B]/25 shadow-[0_0_20px_rgba(245,158,11,0.08)]"
-          }`}
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${
-                bannerIsRed ? "bg-[#EF4444]/20 text-[#EF4444]" : "bg-[#F59E0B]/20 text-[#F59E0B]"
-              }`}
-            >
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <p
-                className={`text-sm font-bold truncate ${
-                  bannerIsRed ? "text-[#EF4444]" : "text-[#F59E0B]"
-                }`}
-              >
-                {alertLabel}
-              </p>
-              <p className="text-xs text-[#9CA3AF] mt-0.5">
-                Avg delay: <span className="font-semibold">{avgDelay} days</span>
-                {bannerIsRed ? " · Clients in red zone!" : " · Follow up soon"}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => {
-              const first = pendingClients[0];
-              if (first) router.push(`/dashboard/updates?client=${first.id}`);
-            }}
-            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 text-white text-xs font-bold rounded-lg transition-all shadow-lg ${
-              bannerIsRed
-                ? "bg-[#EF4444] hover:bg-[#DC2626] shadow-[0_0_15px_rgba(239,68,68,0.2)] hover:shadow-[0_0_20px_rgba(239,68,68,0.4)]"
-                : "bg-[#F59E0B] hover:bg-[#D97706] shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
-            }`}
-          >
-            <Send className="w-3.5 h-3.5" />
-            Send All Updates
-          </button>
-        </div>
-      )}
 
-      {/* ── 2. Header & Quick Actions ─────────────────────────────────────── */}
+      {/* --- Header & Quick Actions --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white font-headline">Overview</h1>
@@ -290,7 +227,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── 3. Metrics Row ────────────────────────────────────────────────── */}
+      {/* --- 3. Metrics Row --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* Active Clients – with MRR hint */}
@@ -351,7 +288,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── 4. Client Portfolio Table ─────────────────────────────────────── */}
+      {/* --- 4. Client Portfolio Table --- */}
       <div className="grid grid-cols-1 gap-8">
         <div className="space-y-6">
           <div className="bg-[#131317] border border-[#1F1F2B] rounded-xl overflow-hidden shadow-sm">
@@ -580,3 +517,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

@@ -1,11 +1,11 @@
-// ─── Organization ──────────────────────────────────────────
+// --- Organization ---
 export interface Organization {
   id: string;
   name: string;
   createdAt?: any;
 }
 
-// ─── User ────────────────────────────────────────────────
+// --- User ---
 export interface UserData {
   id?: string;
   name?: string;
@@ -13,13 +13,17 @@ export interface UserData {
   role?: "owner" | "admin" | "member" | "client";
   /** Single source of truth for org membership. Replaces the old `agencyId` alias. */
   organization_id?: string;
+  /** Display name for the agency workspace (sidebar header) */
+  agencyName?: string;
+  /** Set when role is client — links user to one clients/{id} document */
+  clientId?: string;
   created_at?: any;
   // Soft-delete support
   is_deleted?: boolean;
   deleted_at?: any;
 }
 
-// ─── Client ──────────────────────────────────────────────
+// --- Client ---
 export interface Client {
   id: string;
   name: string;
@@ -36,7 +40,7 @@ export interface Client {
   // Status
   status?: "Active" | "Review" | "Paused" | "Completed";
   progress?: number;
-  // Denormalized cache from latest Project — kept for fast list rendering.
+  // Denormalized cache from latest Project --- kept for fast list rendering.
   // These are read-only snapshots; source of truth lives in `projects` collection.
   lastUpdateDate?: string;
   lastUpdateText?: string;
@@ -51,14 +55,15 @@ export interface Client {
   updateFormat?: string;
   anxietyLevel?: string;
   internalNotes?: string;
+  projectDescription?: string;
 }
 
-// ─── Project ─────────────────────────────────────────────
+// --- Project ---
 export interface Project {
   id: string;
   organization_id: string;
   clientId: string;
-  clientName?: string; // denormalized — update via updateDenormalizedClientName()
+  clientName?: string; // denormalized --- update via updateDenormalizedClientName()
   name: string;
   type: "website" | "app" | "brand" | "campaign" | "other";
   status: "active" | "paused" | "completed" | "archived";
@@ -85,7 +90,7 @@ export interface Milestone {
   order: number;
 }
 
-// ─── Task ────────────────────────────────────────────────
+// --- Task ---
 export type TaskStatus = "todo" | "inprogress" | "review" | "done";
 export type TaskPriority = "urgent" | "medium" | "low";
 
@@ -93,9 +98,9 @@ export interface Task {
   id: string;
   organization_id: string;
   projectId?: string;
-  projectName?: string; // denormalized — update via updateDenormalizedClientName()
+  projectName?: string; // denormalized --- update via updateDenormalizedClientName()
   clientId?: string;
-  clientName?: string; // denormalized — update via updateDenormalizedClientName()
+  clientName?: string; // denormalized --- update via updateDenormalizedClientName()
   title: string;
   description?: string;
   assigneeId?: string;
@@ -114,7 +119,7 @@ export interface Task {
   deleted_at?: any;
 }
 
-// ─── Team Member ─────────────────────────────────────────
+// --- Team Member ---
 export type TeamRole = "owner" | "admin" | "designer" | "developer" | "pm" | "strategist" | "member";
 
 export interface TeamMember {
@@ -132,7 +137,7 @@ export interface TeamMember {
   invitedAt?: any;
 }
 
-// ─── Message ─────────────────────────────────────────────
+// --- Message ---
 export type MessageChannel = "email" | "whatsapp" | "instagram" | "portal" | "internal";
 export type MessageIntent = "question" | "approval" | "revision" | "brief" | "complaint" | "general";
 export type MessageStatus = "new" | "pending_approval" | "assigned" | "draft_ready" | "sent" | "resolved" | "archived";
@@ -141,7 +146,7 @@ export interface Message {
   id: string;
   organization_id: string;
   clientId: string;
-  clientName?: string; // denormalized — update via updateDenormalizedClientName()
+  clientName?: string; // denormalized --- update via updateDenormalizedClientName()
   channel: MessageChannel;
   subject?: string;
   fromName: string;
@@ -169,7 +174,7 @@ export interface MessageReply {
   sentAt: any;
 }
 
-// ─── Whiteboard ──────────────────────────────────────────
+// --- Whiteboard ---
 export interface Whiteboard {
   id: string;
   name: string;
@@ -190,7 +195,7 @@ export interface Whiteboard {
   deleted_at?: any;
 }
 
-// ─── Update ──────────────────────────────────────────────
+// --- Update ---
 export interface Update {
   id: string;
   organization_id: string;
@@ -202,3 +207,4 @@ export interface Update {
   createdAt?: any;
   updatedAt?: any;
 }
+

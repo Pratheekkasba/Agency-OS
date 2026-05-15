@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -15,7 +15,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://agency-os.tech"),
   title: {
-    default: "Agency OS — Client Experience Infrastructure for Agencies",
+    default: "Agency OS --- Client Experience Infrastructure for Agencies",
     template: "%s | Agency OS",
   },
   description:
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://agency-os.tech",
     siteName: "Agency OS",
-    title: "Agency OS — Client Experience Infrastructure for Agencies",
+    title: "Agency OS --- Client Experience Infrastructure for Agencies",
     description:
       "Replace manual status emails with a real-time, white-label client portal. Agency OS gives clients on-demand project visibility so they stop asking 'what's the status?'",
     images: [
@@ -57,13 +57,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Agency OS — Client Experience Infrastructure",
+        alt: "Agency OS --- Client Experience Infrastructure",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agency OS — Client Experience Infrastructure for Agencies",
+    title: "Agency OS --- Client Experience Infrastructure for Agencies",
     description:
       "Replace status email threads with a white-label client portal. Built for high-ticket agencies, powered by Google AI.",
     images: ["/og-image.png"],
@@ -95,7 +95,7 @@ export default function RootLayout({
         <AuthProvider>{children}</AuthProvider>
         <Toaster theme="dark" position="bottom-right" className="font-sans" />
 
-        {/* ── JSON-LD: Organization (global — powers Knowledge Panel) ── */}
+        {/* --- JSON-LD: Organization (global --- powers Knowledge Panel) --- */}
         <Script
           id="schema-organization"
           type="application/ld+json"
@@ -113,7 +113,7 @@ export default function RootLayout({
                 url: "https://agency-os.tech/logo.png",
                 width: 512,
                 height: 512,
-                caption: "Agency OS — Client Experience Infrastructure",
+                caption: "Agency OS --- Client Experience Infrastructure",
               },
               description:
                 "Agency OS builds client experience infrastructure for service agencies. Our platform replaces manual status emails with a structured, AI-powered client portal that gives agency clients real-time project visibility, milestone approvals, and a premium branded experience.",
@@ -157,9 +157,9 @@ export default function RootLayout({
                 "@type": "OfferCatalog",
                 name: "Agency OS Pricing Plans",
                 itemListElement: [
-                  { "@type": "Offer", name: "Starter — Free Forever", url: "https://agency-os.tech/pricing" },
-                  { "@type": "Offer", name: "Growth — $79/month", url: "https://agency-os.tech/pricing" },
-                  { "@type": "Offer", name: "Enterprise — $199/month", url: "https://agency-os.tech/pricing" },
+                  { "@type": "Offer", name: "Starter --- Free Forever", url: "https://agency-os.tech/pricing" },
+                  { "@type": "Offer", name: "Growth --- $79/month", url: "https://agency-os.tech/pricing" },
+                  { "@type": "Offer", name: "Enterprise --- $199/month", url: "https://agency-os.tech/pricing" },
                 ],
               },
               mainEntityOfPage: {
@@ -170,7 +170,7 @@ export default function RootLayout({
           }}
         />
 
-        {/* ── JSON-LD: WebSite (global — powers Sitelinks Searchbox) ── */}
+        {/* --- JSON-LD: WebSite (global --- powers Sitelinks Searchbox) --- */}
         <Script
           id="schema-website"
           type="application/ld+json"
@@ -225,3 +225,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/config";
-import { getUpdates, getProjectsByClient, updateClient, getTasksByClient } from "@/lib/firebase/firestore";
+import { getUpdates, getProjectsByClient, updateClient, getTasksByClient, resolveOrganizationId } from "@/lib/firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import {
   Copy, ArrowLeft, Edit2, FileText, CheckCircle2,
@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner";
 import type { Client, Update, Project, Task } from "@/types";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// --- helpers ---
 
 function timeAgo(date?: any): string {
   if (!date) return "Never";
@@ -29,7 +29,7 @@ function timeAgo(date?: any): string {
 }
 
 function formatDate(date?: any): string {
-  if (!date) return "—";
+  if (!date) return "---";
   const d = date?.toDate?.() ?? new Date(date);
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
@@ -47,7 +47,7 @@ function statusStyle(status?: string) {
   return "bg-[#6B7280]/10 text-[#9CA3AF] border-[#6B7280]/25";
 }
 
-// ─── Component ──────────────────────────────────────────────────────────────
+// --- Component ---
 
 export default function ClientDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -55,7 +55,7 @@ export default function ClientDetailsPage() {
   const { userData } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const orgId = (userData as any)?.organization_id;
+  const orgId = resolveOrganizationId(userData);
 
   const [client, setClient] = useState<Client | null>(null);
   const [updates, setUpdates] = useState<Update[]>([]);
@@ -76,25 +76,45 @@ export default function ClientDetailsPage() {
     if (!id) return;
     async function load() {
       setIsLoading(true);
+      setNotFound(false);
       try {
         const snap = await getDoc(doc(db, "clients", id));
-        if (!snap.exists()) { setNotFound(true); return; }
+        if (!snap.exists()) {
+          setNotFound(true);
+          return;
+        }
         const clientData = { id: snap.id, ...snap.data() } as Client;
+
+        if (orgId && clientData.organization_id && clientData.organization_id !== orgId) {
+          setNotFound(true);
+          return;
+        }
+
         setClient(clientData);
         setTempProgress(clientData.progress ?? 0);
         setTempDescription((clientData as any).projectDescription ?? "");
-        if (orgId) {
-          const [u, p, t] = await Promise.all([
-            getUpdates(orgId, id, 10),
-            getProjectsByClient(orgId, id),
-            getTasksByClient(orgId, id),
-          ]);
-          setUpdates(u);
-          setProjects(p);
-          setTasks(t);
+
+        const effectiveOrgId = orgId ?? clientData.organization_id;
+        if (effectiveOrgId) {
+          try {
+            const [u, p, t] = await Promise.all([
+              getUpdates(effectiveOrgId, id, 10),
+              getProjectsByClient(effectiveOrgId, id),
+              getTasksByClient(effectiveOrgId, id),
+            ]);
+            setUpdates(u);
+            setProjects(p);
+            setTasks(t);
+          } catch (relatedErr) {
+            console.error("Failed to load client related data:", relatedErr);
+          }
         }
-      } catch { setNotFound(true); }
-      finally { setIsLoading(false); }
+      } catch (err) {
+        console.error("Failed to load client:", err);
+        setNotFound(true);
+      } finally {
+        setIsLoading(false);
+      }
     }
     load();
   }, [id, orgId]);
@@ -131,7 +151,7 @@ export default function ClientDetailsPage() {
     finally { setSavingDescription(false); }
   };
 
-  // ── Loading ────────────────────────────────────────────────────────────────
+  // --- Loading ---
 
   if (isLoading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -164,12 +184,12 @@ export default function ClientDetailsPage() {
   const progress = client.progress ?? 0;
   const pColor = progressColor(progress);
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // --- Render ---
 
   return (
     <div className="h-full overflow-y-auto animate-fade-in">
 
-      {/* ── Hero Header ───────────────────────────────────────────────────── */}
+      {/* --- Hero Header --- */}
       <div className="relative overflow-hidden border-b border-[#1F1F2B] bg-[#0A0A10]">
         {/* ambient glows */}
         <div className="absolute inset-0 pointer-events-none">
@@ -253,7 +273,7 @@ export default function ClientDetailsPage() {
             </div>
           </div>
 
-          {/* ── Stats strip ─────────────────────────────────────────────── */}
+          {/* --- Stats strip --- */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
             {[
               {
@@ -291,11 +311,11 @@ export default function ClientDetailsPage() {
         </div>
       </div>
 
-      {/* ── Body ──────────────────────────────────────────────────────────── */}
+      {/* --- Body --- */}
       <div className="max-w-7xl mx-auto px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
 
-          {/* ── LEFT SIDEBAR ──────────────────────────────────────────────── */}
+          {/* --- LEFT SIDEBAR --- */}
           <div className="space-y-5">
 
             {/* Progress editor */}
@@ -462,7 +482,7 @@ export default function ClientDetailsPage() {
             </div>
           </div>
 
-          {/* ── RIGHT MAIN ────────────────────────────────────────────────── */}
+          {/* --- RIGHT MAIN --- */}
           <div className="space-y-6">
 
             {/* Latest Update */}
@@ -620,3 +640,4 @@ export default function ClientDetailsPage() {
     </div>
   );
 }
+

@@ -6,9 +6,17 @@ import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase/config";
 import { sendEmailVerification } from "firebase/auth";
 import { Mail, ArrowRight, RefreshCcw, Loader2 } from "lucide-react";
+import { sendWelcomeEmail } from "@/lib/email/notify";
+import { requiresEmailVerification } from "@/lib/auth/email-verification";
+
+function getPostVerifyPath(role?: string) {
+  if (!role) return "/role";
+  if (role === "client") return "/portal";
+  return "/dashboard";
+}
 
 export default function VerifyEmailPage() {
-  const { user, loading } = useAuth();
+  const { user, userData, loading, userRefreshKey, refreshUser } = useAuth();
   const router = useRouter();
   const [resending, setResending] = useState(false);
   const [reloading, setReloading] = useState(false);
@@ -17,10 +25,18 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
+    } else if (!loading && userData?.role === "client") {
+      router.replace("/portal");
     } else if (!loading && user?.emailVerified) {
-      router.replace("/dashboard");
+      router.replace(getPostVerifyPath(userData?.role));
+    } else if (
+      !loading &&
+      userData?.role &&
+      !requiresEmailVerification(userData.role)
+    ) {
+      router.replace(getPostVerifyPath(userData.role));
     }
-  }, [user, loading, router]);
+  }, [user, userData?.role, loading, userRefreshKey, router]);
 
   const handleResend = async () => {
     if (!auth.currentUser || resending) return;
@@ -48,10 +64,16 @@ export default function VerifyEmailPage() {
   const handleReload = async () => {
     if (!auth.currentUser || reloading) return;
     setReloading(true);
+    setMessage(null);
     try {
-      await auth.currentUser.reload();
-      if (auth.currentUser.emailVerified) {
-        router.replace("/dashboard");
+      const verified = await refreshUser();
+      if (verified) {
+        if (userData?.role && userData.role !== "client") {
+          await sendWelcomeEmail(
+            auth.currentUser?.displayName || undefined
+          ).catch((err) => console.error("welcome email:", err));
+        }
+        router.replace(getPostVerifyPath(userData?.role));
       } else {
         setMessage({ type: "error", text: "Your email is still not verified. Please check your inbox and spam folder." });
       }

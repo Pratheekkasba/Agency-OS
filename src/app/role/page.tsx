@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase/config";
-import { setUserRole, getClientByAccessId } from "@/lib/firebase/firestore";
+import { setUserRole } from "@/lib/firebase/firestore";
+import { sendWelcomeEmail } from "@/lib/email/notify";
 import { ArrowLeft, ArrowRight, Building2, Users, KeyRound, Loader2, LayoutGrid } from "lucide-react";
 
 type Step = "choose" | "agency-code";
@@ -20,7 +22,7 @@ export default function RoleSelectionPage() {
   // If already has a role, redirect immediately
   if (!loading && userData?.role) {
     if (userData.role === "client") {
-      router.replace("/client");
+      router.replace("/portal");
     } else {
       router.replace("/dashboard");
     }
@@ -57,7 +59,23 @@ export default function RoleSelectionPage() {
 
       localStorage.setItem("agency-role", "owner");
       localStorage.setItem("agency-id", organization_id);
-      router.push("/dashboard");
+
+      await fetch("/api/auth/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: auth.currentUser.email }),
+      }).catch((err) => console.error("Failed to send verification email:", err));
+
+      if (!localStorage.getItem("agency_os_welcome_sent")) {
+        const welcomed = await sendWelcomeEmail(
+          auth.currentUser.displayName || undefined
+        );
+        if (welcomed) localStorage.setItem("agency_os_welcome_sent", "1");
+      }
+
+      router.push(
+        auth.currentUser.emailVerified ? "/dashboard" : "/verify"
+      );
     } catch (err) {
       console.error("Error setting agency role:", err);
       setError("Something went wrong. Please try again.");
@@ -77,19 +95,31 @@ export default function RoleSelectionPage() {
     setSaving(true);
     setError(null);
 
-    // Real Firestore validation
-    let clientData;
+    // Server-side lookup (client users cannot query Firestore before org claims exist)
+    let clientData: {
+      id: string;
+      name: string;
+      organization_id: string;
+      accessId: string;
+      status?: string;
+    };
     try {
-      clientData = await getClientByAccessId(trimmedCode);
+      const idToken = await auth.currentUser.getIdToken();
+      const res = await fetch("/api/auth/verify-access-id", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, accessId: trimmedCode }),
+      });
+      const payload = await res.json();
+      if (!res.ok || !payload.found) {
+        setError("Invalid Access ID. Please check and try again.");
+        setSaving(false);
+        return;
+      }
+      clientData = payload.client;
     } catch (err) {
       console.error("Error fetching client by Access ID:", err);
       setError("An error occurred verifying your access code.");
-      setSaving(false);
-      return;
-    }
-
-    if (!clientData) {
-      setError("Invalid Access ID. Please check and try again.");
       setSaving(false);
       return;
     }
@@ -98,17 +128,34 @@ export default function RoleSelectionPage() {
       const uid = auth.currentUser.uid;
       // organization_id for a client = the agency's organization_id (the org they belong to)
       const organization_id = clientData.organization_id;
-      await setUserRole(uid, "client", organization_id);
+      await setUserRole(uid, "client", organization_id, clientData.id);
 
       // Stamp organization_id into the Firebase Auth JWT via Admin SDK
       const idToken = await auth.currentUser.getIdToken();
       await fetch("/api/auth/set-claims", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, organization_id, role: "client" }),
+        body: JSON.stringify({
+          idToken,
+          organization_id,
+          role: "client",
+          client_id: clientData.id,
+        }),
       });
       // Force-refresh so claim is immediately active
       await auth.currentUser.getIdToken(true);
+
+      await fetch("/api/auth/complete-client-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: await auth.currentUser.getIdToken(), accessId: trimmedCode }),
+      }).catch((err) => console.error("complete-client-access:", err));
+
+      await auth.currentUser.reload();
+
+      await sendWelcomeEmail(
+        clientData.name || auth.currentUser.displayName || undefined
+      ).catch((err) => console.error("welcome email:", err));
 
       localStorage.setItem("agency-role", "client");
       localStorage.setItem("agency-access-id", clientData.accessId || "");
@@ -118,7 +165,7 @@ export default function RoleSelectionPage() {
         status: clientData.status, 
         accessId: clientData.accessId 
       }));
-      router.push("/client");
+      router.push("/portal");
     } catch (err) {
       console.error("Error setting client role:", err);
       setError("Something went wrong. Please try again.");
@@ -135,19 +182,20 @@ export default function RoleSelectionPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0B0B0F] text-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen w-full bg-[#0B0B0F] text-white flex flex-col relative overflow-x-hidden">
       {/* Background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#5B5CF6]/10 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(800px,100vw)] h-[min(800px,100vh)] bg-[#5B5CF6]/10 rounded-full blur-[150px] pointer-events-none" />
 
-      {/* Main content — vertically + horizontally centered */}
-      <main className="flex-1 w-full flex items-center justify-center px-6 py-8 relative z-10">
-        <div className="w-full max-w-5xl mx-auto grid">
-          {/* ─── STEP 1: Choose Role ─── */}
+      {/* Centered content column (main + footer) */}
+      <div className="relative z-10 flex flex-1 w-full flex-col items-center justify-center px-6 py-10">
+        <main className="w-full max-w-3xl">
+          <div className="relative min-h-[min(480px,65vh)] flex items-center justify-center overflow-hidden">
+          {/* --- STEP 1: Choose Role --- */}
           <div
-            className={`col-start-1 row-start-1 transition-all duration-500 w-full flex flex-col items-center justify-center ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`w-full flex flex-col items-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               step === "choose"
-                ? "opacity-100 translate-x-0 z-10"
-                : "opacity-0 -translate-x-full pointer-events-none"
+                ? "relative opacity-100 translate-y-0 pointer-events-auto"
+                : "absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none"
             }`}
           >
             {/* Header */}
@@ -176,7 +224,7 @@ export default function RoleSelectionPage() {
               </p>
             </div>
             {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
               {/* Agency Card */}
               <button
                 disabled={saving}
@@ -232,7 +280,7 @@ export default function RoleSelectionPage() {
                     Client Portal
                   </h2>
                   <p className="text-[#9CA3AF] text-sm leading-relaxed mb-5 flex-1 relative z-10">
-                    Track your project progress, view updates from your agency, and approve deliverables — all in one place.
+                    Track your project progress, view updates from your agency, and approve deliverables --- all in one place.
                   </p>
                   
                   <div className="mt-auto flex items-center justify-between border-t border-[#1F1F2B] pt-4 group-hover:border-[#2D2D3D] transition-colors relative z-10">
@@ -245,12 +293,12 @@ export default function RoleSelectionPage() {
               </button>
             </div>
           </div>
-          {/* ─── STEP 2: Enter Agency Code ─── */}
+          {/* --- STEP 2: Enter Agency Code --- */}
           <div
-            className={`col-start-1 row-start-1 flex flex-col items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`w-full flex flex-col items-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               step === "agency-code"
-                ? "opacity-100 translate-x-0 z-10"
-                : "opacity-0 translate-x-full pointer-events-none"
+                ? "relative opacity-100 translate-y-0 pointer-events-auto"
+                : "absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none"
             }`}
           >
             <div className="max-w-md w-full mx-auto">
@@ -322,26 +370,29 @@ export default function RoleSelectionPage() {
               {/* Help text */}
               <p className="text-[#6B7280] text-xs mt-6 text-center">
                 Don&apos;t have an Access ID?{" "}
-                <a href="#" className="text-[#5B5CF6] hover:underline">Contact your agency</a>
+                <Link href="/support" className="text-[#5B5CF6] hover:underline">Contact support</Link>
                 {" "}to get one.
               </p>
             </div>
           </div>
 
         </div>
-      </main>
+        </main>
 
-      {/* Footer */}
-      <footer className="py-8 px-6 flex flex-col md:flex-row items-center justify-between gap-4 max-w-7xl mx-auto w-full relative z-10">
-        <div className="text-[#6B7280]/50 text-xs tracking-widest uppercase">
-          © 2024 Agency OS
-        </div>
-        <nav className="flex items-center gap-6">
-          <a className="text-[#6B7280]/60 hover:text-white transition-colors text-xs uppercase tracking-wider" href="#">Privacy Policy</a>
-          <a className="text-[#6B7280]/60 hover:text-white transition-colors text-xs uppercase tracking-wider" href="#">Terms of Service</a>
-          <a className="text-[#6B7280]/60 hover:text-white transition-colors text-xs uppercase tracking-wider" href="#">Support</a>
-        </nav>
-      </footer>
+        <footer className="w-full max-w-3xl mt-10 pt-6 border-t border-[#1F1F2B]/60">
+          <div className="w-full flex flex-col items-center justify-center gap-4 md:flex-row md:justify-between text-center">
+          <div className="text-[#6B7280]/50 text-xs tracking-widest uppercase">
+            © 2026 Agency OS
+          </div>
+          <nav className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/privacy" className="text-[#6B7280]/60 hover:text-white transition-colors text-xs uppercase tracking-wider">Privacy Policy</Link>
+            <Link href="/terms" className="text-[#6B7280]/60 hover:text-white transition-colors text-xs uppercase tracking-wider">Terms of Service</Link>
+            <Link href="/support" className="text-[#6B7280]/60 hover:text-white transition-colors text-xs uppercase tracking-wider">Support</Link>
+          </nav>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
+

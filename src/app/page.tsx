@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { WaitlistHero } from "@/components/ui/waitlist-hero";
 import { Navbar } from "@/components/ui/navbar";
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-/* ─── DESIGN TOKENS ─── */
+/* --- DESIGN TOKENS --- */
 const C = {
   bg: "#0B0B0F",
   surface: "#12121A",
@@ -20,49 +20,49 @@ const C = {
   borderHover: "#2A2A3A",
 };
 
-/* ─── DATA ─── */
+/* --- DATA --- */
 const features = [
   {
     key: "portal",
     icon: <Eye className="w-5 h-5" />,
     color: C.primary,
     label: "Smart Client Portal",
-    desc: "Give clients real-time visibility without sending a single email. Done, approved, and next—always clear. Let your clients view the complete project timeline, access secure files, and approve deliverables with ease.",
+    desc: "Give clients real-time visibility without sending a single email. Done, approved, and next---always clear. Let your clients view the complete project timeline, access secure files, and approve deliverables with ease.",
   },
   {
     key: "ai-inbox",
     icon: <Bot className="w-5 h-5" />,
     color: C.accent,
     label: "AI Inbox Triage",
-    desc: "Auto-tag intent, draft replies, and route messages to the right owner—so nothing slips through.",
+    desc: "Auto-tag intent, draft replies, and route messages to the right owner---so nothing slips through.",
   },
   {
     key: "analytics",
     icon: <BarChart3 className="w-5 h-5" />,
     color: "#10b981",
     label: "Agency Analytics",
-    desc: "Track response time, throughput, and satisfaction in one dashboard—know what to fix before clients feel it.",
+    desc: "Track response time, throughput, and satisfaction in one dashboard---know what to fix before clients feel it.",
   },
   {
     key: "shared-inbox",
     icon: <Inbox className="w-5 h-5" />,
     color: "#f59e0b",
     label: "Shared Team Inbox",
-    desc: "One source of truth for every client thread. Assign, prioritize, and respond fast—without the chaos.",
+    desc: "One source of truth for every client thread. Assign, prioritize, and respond fast---without the chaos.",
   },
   {
     key: "security",
     icon: <Lock className="w-5 h-5" />,
     color: "#ec4899",
     label: "Enterprise Security",
-    desc: "Role-based access and secure defaults from day one—built to earn trust with every client login.",
+    desc: "Role-based access and secure defaults from day one---built to earn trust with every client login.",
   },
   {
     key: "realtime",
     icon: <Globe2 className="w-5 h-5" />,
     color: "#06b6d4",
     label: "Real-Time Updates",
-    desc: "Stay perfectly in sync across the team and client portal—no refresh, no status meetings.",
+    desc: "Stay perfectly in sync across the team and client portal---no refresh, no status meetings.",
   },
 ];
 
@@ -86,7 +86,7 @@ const stats = [
   { value: "120+", label: "Agencies on waitlist" },
 ];
 
-/* ─── COMPONENTS ─── */
+/* --- COMPONENTS --- */
 
 function PrimaryBtn({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
   return (
@@ -174,12 +174,12 @@ function FeatureCard({
   );
 }
 
-/* ─── PAGE ─── */
+/* --- PAGE --- */
 export default function Home() {
   return (
     <main style={{ background: C.bg, color: C.text, fontFamily: "'Space Grotesk', sans-serif", overflowX: "hidden", minHeight: "100vh" }}>
 
-      {/* ── JSON-LD: SoftwareApplication (homepage + features + pricing) ── */}
+      {/* --- JSON-LD: SoftwareApplication (homepage + features + pricing) --- */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -191,7 +191,7 @@ export default function Home() {
             alternateName: "Agency OS Client Portal",
             url: "https://agency-os.tech",
             description:
-              "Agency OS is client experience infrastructure for high-ticket service agencies. It replaces manual status email updates with a real-time, white-label client portal that gives clients on-demand visibility into project milestones, approvals, and deliverables — powered by Google AI and built on Firebase.",
+              "Agency OS is client experience infrastructure for high-ticket service agencies. It replaces manual status email updates with a real-time, white-label client portal that gives clients on-demand visibility into project milestones, approvals, and deliverables --- powered by Google AI and built on Firebase.",
             applicationCategory: "BusinessApplication",
             applicationSubCategory: "Client Portal Software",
             operatingSystem: "Web, iOS, Android",
@@ -202,7 +202,7 @@ export default function Home() {
               "Milestone-based client approval workflows",
               "Role-based access control (agency team vs. client)",
               "Shared team inbox with message assignment",
-              "Agency analytics dashboard — response time and client satisfaction",
+              "Agency analytics dashboard --- response time and client satisfaction",
               "Integration with Gmail, Slack, WhatsApp, and Notion",
               "Secure file and asset delivery vault",
               "Magic link client authentication (no password required)",
@@ -241,7 +241,7 @@ export default function Home() {
         }}
       />
 
-      {/* ── JSON-LD: FAQPage (PAA expansion — adds 3–5 extra SERP lines) ── */}
+      {/* --- JSON-LD: FAQPage (PAA expansion --- adds 3–5 extra SERP lines) --- */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -254,7 +254,7 @@ export default function Home() {
                 name: "What is a client portal for agencies?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "A client portal for agencies is a secure, branded web interface that gives clients on-demand visibility into their project's status, milestones, and deliverables — without requiring the agency to send manual email updates. Agency OS provides a real-time client portal with a Done / In Progress / Next framework that eliminates the 'what's the status?' question permanently.",
+                  text: "A client portal for agencies is a secure, branded web interface that gives clients on-demand visibility into their project's status, milestones, and deliverables --- without requiring the agency to send manual email updates. Agency OS provides a real-time client portal with a Done / In Progress / Next framework that eliminates the 'what's the status?' question permanently.",
                 },
               },
               {
@@ -262,7 +262,7 @@ export default function Home() {
                 name: "How is Agency OS different from ClickUp or Notion?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "ClickUp and Notion are internal project management and documentation tools — they expose your team's internal task boards and can accidentally grant clients access to sensitive information. Agency OS is client experience infrastructure: a dedicated, curated layer your clients see that's entirely separate from your internal tools. It's designed to make clients feel informed and confident, not overwhelmed by internal project details.",
+                  text: "ClickUp and Notion are internal project management and documentation tools --- they expose your team's internal task boards and can accidentally grant clients access to sensitive information. Agency OS is client experience infrastructure: a dedicated, curated layer your clients see that's entirely separate from your internal tools. It's designed to make clients feel informed and confident, not overwhelmed by internal project details.",
                 },
               },
               {
@@ -270,7 +270,7 @@ export default function Home() {
                 name: "Does Agency OS support white-label client portals?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Yes. The Agency OS Enterprise plan includes full white-label support: custom domain (CNAME), your agency's logo, brand colors, and complete removal of Agency OS branding — so clients see your agency's name and identity on their portal at every touchpoint.",
+                  text: "Yes. The Agency OS Enterprise plan includes full white-label support: custom domain (CNAME), your agency's logo, brand colors, and complete removal of Agency OS branding --- so clients see your agency's name and identity on their portal at every touchpoint.",
                 },
               },
               {
@@ -278,7 +278,7 @@ export default function Home() {
                 name: "How does Agency OS use AI for client communication?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Agency OS uses Google Gemini AI to power its inbox triage system. When client messages arrive via Gmail, Slack, or WhatsApp, Gemini automatically tags the message intent, categorizes urgency, and drafts a reply for your team to approve — reducing response time and ensuring nothing slips through the gaps.",
+                  text: "Agency OS uses Google Gemini AI to power its inbox triage system. When client messages arrive via Gmail, Slack, or WhatsApp, Gemini automatically tags the message intent, categorizes urgency, and drafts a reply for your team to approve --- reducing response time and ensuring nothing slips through the gaps.",
                 },
               },
               {
@@ -286,7 +286,7 @@ export default function Home() {
                 name: "Can clients approve deliverables inside Agency OS?",
                 acceptedAnswer: {
                   "@type": "Answer",
-                  text: "Yes. Agency OS client portals support milestone-based digital approvals. Clients can review a deliverable, leave feedback, and digitally sign off on a milestone — creating a timestamped audit trail that protects agencies from scope creep disputes.",
+                  text: "Yes. Agency OS client portals support milestone-based digital approvals. Clients can review a deliverable, leave feedback, and digitally sign off on a milestone --- creating a timestamped audit trail that protects agencies from scope creep disputes.",
                 },
               },
               {
@@ -308,15 +308,15 @@ export default function Home() {
         <div style={{ position: "absolute", top: "40%", right: 0, width: 350, height: 350, borderRadius: "50%", background: `radial-gradient(circle, ${C.accent}08 0%, transparent 70%)` }} />
       </div>
 
-      {/* ── NAVBAR ── */}
+      {/* --- NAVBAR --- */}
       <Navbar />
 
-      {/* ── HERO ── */}
+      {/* --- HERO --- */}
       <section className="relative w-full z-10">
         <WaitlistHero />
       </section>
 
-      {/* ── STATS STRIP ── */}
+      {/* --- STATS STRIP --- */}
       <section className="relative z-10 w-full" style={{ borderTop: `1px solid ${C.border}`, borderBottom: `1px solid ${C.border}`, background: "rgba(255,255,255,0.012)" }}>
         <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((s) => (
@@ -330,7 +330,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── THE PROBLEM ── */}
+      {/* --- THE PROBLEM --- */}
       <section className="relative z-10 w-full py-24 md:py-32 px-6">
         <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
           {/* Left: problem statement */}
@@ -381,10 +381,10 @@ export default function Home() {
               Agency OS brings everything into one place.
             </h3>
             <p style={{ fontSize: 15, lineHeight: 1.75, color: C.muted, marginBottom: 24 }}>
-              One login. Client portals, AI inbox, project tracking, and analytics — unified and working together from day one.
+              One login. Client portals, AI inbox, project tracking, and analytics --- unified and working together from day one.
             </p>
             <div className="flex flex-col gap-3">
-              {["Client portal visible to clients — not just you", "Every message triaged and pre-drafted by AI", "Your whole team, one shared view"].map((item) => (
+              {["Client portal visible to clients --- not just you", "Every message triaged and pre-drafted by AI", "Your whole team, one shared view"].map((item) => (
                 <div key={item} className="flex items-start gap-3" style={{ fontSize: 14, color: C.muted }}>
                   <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#10b981" }} />
                   {item}
@@ -395,7 +395,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
+      {/* --- FEATURES --- */}
       <section
         className="relative z-10 w-full py-24"
         style={{ borderTop: `1px solid ${C.border}` }}
@@ -422,7 +422,7 @@ export default function Home() {
               .
             </h2>
             <p className="mt-4 text-gray-400 max-w-2xl leading-relaxed">
-              Replace scattered tools with one system built for agency operations—client visibility, message triage, execution, and clarity.
+              Replace scattered tools with one system built for agency operations---client visibility, message triage, execution, and clarity.
             </p>
           </div>
 
@@ -434,7 +434,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
+      {/* --- HOW IT WORKS --- */}
       <section className="relative z-10 w-full py-24 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -466,7 +466,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── INTEGRATIONS ── */}
+      {/* --- INTEGRATIONS --- */}
       <section className="relative z-10 w-full py-14 px-6" style={{ borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-4xl mx-auto text-center">
           <p style={{ fontSize: 12, color: "#3a3a4a", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 24 }}>
@@ -480,7 +480,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* --- CTA --- */}
       <section className="relative z-10 w-full py-28 md:py-36 px-6 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse 60% 50% at 50% 50%, ${C.primary}12, transparent 70%)` }} />
         <div className="max-w-2xl mx-auto relative text-center">
@@ -520,7 +520,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
+      {/* --- FOOTER --- */}
       <footer className="relative z-10 py-10 px-6" style={{ borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: C.text }}>Agency OS.</div>
@@ -535,3 +535,4 @@ export default function Home() {
     </main>
   );
 }
+

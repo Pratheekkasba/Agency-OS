@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -17,49 +17,49 @@ const alternatives: Record<string, {
   notion: {
     name: "Notion", slug: "notion",
     headline: "The Best Notion Alternative for Agency Client Portals",
-    subheadline: "Notion is a powerful internal tool. It was never designed to be a client portal — and the difference matters.",
+    subheadline: "Notion is a powerful internal tool. It was never designed to be a client portal --- and the difference matters.",
     whyPeople: "Agencies start using Notion as a client portal because they already use it internally for docs and SOPs. Sharing a Notion page with a client is free and familiar. The problems emerge at scale: permission models become dangerous, the interface isn't branded, and clients who aren't 'Notion people' find it confusing.",
-    why: "Agency OS is purpose-built for the client experience layer. Where Notion forces you to build a client portal from scratch using databases, toggles, and manual permission management — Agency OS comes pre-wired with milestone tracking, digital approvals, AI inbox triage, and white-label branding.",
+    why: "Agency OS is purpose-built for the client experience layer. Where Notion forces you to build a client portal from scratch using databases, toggles, and manual permission management --- Agency OS comes pre-wired with milestone tracking, digital approvals, AI inbox triage, and white-label branding.",
     comparisons: [
-      { aspect: "Data partitioning (client sees only their data)", them: "Manual — dangerous at scale", us: "Structural — impossible to misconfigure" },
+      { aspect: "Data partitioning (client sees only their data)", them: "Manual --- dangerous at scale", us: "Structural --- impossible to misconfigure" },
       { aspect: "Setup time for a client portal", them: "10–20 hours of Notion database setup", us: "15 minutes" },
       { aspect: "White-label / your own domain", them: "Not available", us: "✓ Growth plan+" },
       { aspect: "Client milestone approvals", them: "Not available", us: "✓ Digital sign-off + audit trail" },
       { aspect: "AI inbox triage", them: "Notion AI (writing assistant only)", us: "✓ Gemini-powered client message triage" },
       { aspect: "Designed for non-technical clients", them: "Learning curve for Notion UI", us: "Purpose-built client UX" },
-      { aspect: "Internal documentation", them: "Best-in-class", us: "Not the focus — use Notion for this" },
+      { aspect: "Internal documentation", them: "Best-in-class", us: "Not the focus --- use Notion for this" },
     ],
     faqs: [
-      { q: "Why are agencies looking for Notion alternatives for client portals?", a: "Three main reasons: (1) Notion's permission model was not designed for secure multi-client access — one misconfiguration can expose internal docs to the wrong client. (2) Notion is not white-labelable, so clients always know they're in 'Notion'. (3) Building a professional client portal in Notion requires significant custom database setup — it doesn't come pre-wired for agency workflows." },
-      { q: "What is the best Notion alternative for client portals?", a: "Agency OS is built specifically for the agency client experience layer. It provides structured milestone tracking, digital approval workflows, and white-label branding out of the box — without the setup overhead or security risks of a Notion-based client portal." },
-      { q: "Can I use both Notion and Agency OS?", a: "Yes — this is the recommended setup. Keep Notion for internal documentation, SOPs, and team knowledge management. Use Agency OS for the client-facing portal, milestone updates, and approval workflows. They serve different layers of your operation." },
-      { q: "Is Agency OS free like Notion?", a: "Agency OS has a free Starter plan that includes a client portal for up to 3 active clients. Unlike Notion, there's no free plan that includes white-labeling — that requires the Growth plan. But the core portal experience is available at no cost to start." },
+      { q: "Why are agencies looking for Notion alternatives for client portals?", a: "Three main reasons: (1) Notion's permission model was not designed for secure multi-client access --- one misconfiguration can expose internal docs to the wrong client. (2) Notion is not white-labelable, so clients always know they're in 'Notion'. (3) Building a professional client portal in Notion requires significant custom database setup --- it doesn't come pre-wired for agency workflows." },
+      { q: "What is the best Notion alternative for client portals?", a: "Agency OS is built specifically for the agency client experience layer. It provides structured milestone tracking, digital approval workflows, and white-label branding out of the box --- without the setup overhead or security risks of a Notion-based client portal." },
+      { q: "Can I use both Notion and Agency OS?", a: "Yes --- this is the recommended setup. Keep Notion for internal documentation, SOPs, and team knowledge management. Use Agency OS for the client-facing portal, milestone updates, and approval workflows. They serve different layers of your operation." },
+      { q: "Is Agency OS free like Notion?", a: "Agency OS has a free Starter plan that includes a client portal for up to 3 active clients. Unlike Notion, there's no free plan that includes white-labeling --- that requires the Growth plan. But the core portal experience is available at no cost to start." },
     ],
   },
   clickup: {
     name: "ClickUp", slug: "clickup",
     headline: "The Best ClickUp Alternative for Agency Client Portals",
-    subheadline: "ClickUp is built for your team. Agency OS is built for your clients. They're not competing — they're complementary.",
-    whyPeople: "Agencies try to use ClickUp's guest view to give clients project visibility. The problem: ClickUp is designed for delivery teams, not client experience. Clients see raw tasks, internal comments, and operational details they don't need — and miss the milestone clarity they actually want.",
-    why: "Agency OS presents a curated, client-readable view of your project status — without exposing your internal operations. Your team stays in ClickUp. Your clients see Agency OS.",
+    subheadline: "ClickUp is built for your team. Agency OS is built for your clients. They're not competing --- they're complementary.",
+    whyPeople: "Agencies try to use ClickUp's guest view to give clients project visibility. The problem: ClickUp is designed for delivery teams, not client experience. Clients see raw tasks, internal comments, and operational details they don't need --- and miss the milestone clarity they actually want.",
+    why: "Agency OS presents a curated, client-readable view of your project status --- without exposing your internal operations. Your team stays in ClickUp. Your clients see Agency OS.",
     comparisons: [
-      { aspect: "Purpose-built client portal", them: "Guest view — clients see internal tasks", us: "Dedicated portal — curated client view only" },
+      { aspect: "Purpose-built client portal", them: "Guest view --- clients see internal tasks", us: "Dedicated portal --- curated client view only" },
       { aspect: "White-label / custom domain", them: "Enterprise only ($$$)", us: "Growth plan+" },
       { aspect: "Client milestone approvals", them: "Not available", us: "Digital sign-off + audit trail" },
       { aspect: "Designed for non-technical clients", them: "Overwhelming for non-project-managers", us: "Purpose-built client UX" },
       { aspect: "Internal task management", them: "Best-in-class", us: "Not the focus" },
-      { aspect: "Pricing for client-facing features", them: "High — per-seat model", us: "Per-client pricing" },
+      { aspect: "Pricing for client-facing features", them: "High --- per-seat model", us: "Per-client pricing" },
     ],
     faqs: [
-      { q: "Why are agencies looking for ClickUp alternatives for client communication?", a: "ClickUp's guest access shows clients your raw internal task structure — team conversations, internal notes, and operational details that erode client confidence when exposed. Agencies want a tool that curates and translates internal progress into a client-friendly view." },
-      { q: "Should I replace ClickUp with Agency OS?", a: "No — replace the client-facing layer, not the internal operation. Your team continues using ClickUp for project management. Agency OS sits in front of that as the client experience layer — what clients see, interact with, and approve." },
+      { q: "Why are agencies looking for ClickUp alternatives for client communication?", a: "ClickUp's guest access shows clients your raw internal task structure --- team conversations, internal notes, and operational details that erode client confidence when exposed. Agencies want a tool that curates and translates internal progress into a client-friendly view." },
+      { q: "Should I replace ClickUp with Agency OS?", a: "No --- replace the client-facing layer, not the internal operation. Your team continues using ClickUp for project management. Agency OS sits in front of that as the client experience layer --- what clients see, interact with, and approve." },
     ],
   },
   monday: {
     name: "Monday.com", slug: "monday",
     headline: "The Best Monday.com Alternative for Agency Client Portals",
     subheadline: "Monday.com manages your work. Agency OS manages your client relationships.",
-    whyPeople: "Agencies use Monday.com's view-sharing feature to give clients project visibility. Like ClickUp, the result is clients seeing a board full of internal operational data — not a curated, milestone-level view. The per-seat pricing also becomes punishing when adding clients.",
+    whyPeople: "Agencies use Monday.com's view-sharing feature to give clients project visibility. Like ClickUp, the result is clients seeing a board full of internal operational data --- not a curated, milestone-level view. The per-seat pricing also becomes punishing when adding clients.",
     why: "Agency OS gives clients a dedicated portal experience that's separate from your internal operations. No per-seat pricing penalty for adding clients. No scramble to clean up your boards before sharing. Just a clean, branded portal.",
     comparisons: [
       { aspect: "Dedicated client portal (not shared board)", them: "Board view-sharing only", us: "Purpose-built portal" },
@@ -70,7 +70,7 @@ const alternatives: Record<string, {
     ],
     faqs: [
       { q: "What is the best Monday.com alternative for agency client portals?", a: "Agency OS. It provides what Monday.com's view-sharing doesn't: a branded, curated portal experience that clients can navigate without understanding project management software." },
-      { q: "Is Agency OS cheaper than Monday.com?", a: "For the client experience layer, yes. Monday.com charges per seat — adding 10 clients can cost hundreds per month. Agency OS charges per client portal with a free Starter plan, making the cost structure predictable as you scale." },
+      { q: "Is Agency OS cheaper than Monday.com?", a: "For the client experience layer, yes. Monday.com charges per seat --- adding 10 clients can cost hundreds per month. Agency OS charges per client portal with a free Starter plan, making the cost structure predictable as you scale." },
     ],
   },
 };
@@ -144,7 +144,7 @@ export default async function AlternativePage({ params }: { params: Promise<{ co
 
         <section style={{ marginBottom: 56 }}>
           <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 24 }}>
-            Agency OS vs {a.name} — Side-by-Side
+            Agency OS vs {a.name} --- Side-by-Side
           </h2>
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
@@ -193,3 +193,4 @@ export default async function AlternativePage({ params }: { params: Promise<{ co
     </main>
   );
 }
+

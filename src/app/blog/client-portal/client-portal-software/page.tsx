@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "The 7 Best Client Portal Software Platforms for Agencies in 2026",
-  description: "A ranked comparison of agency-grade client portal software — covering features, pricing, and which tools are actually built for client-facing work versus internal project management.",
+  description: "A ranked comparison of agency-grade client portal software --- covering features, pricing, and which tools are actually built for client-facing work versus internal project management.",
   keywords: ["best client portal software for agencies 2026", "agency client management platform", "client portal tools comparison"],
   alternates: { canonical: "https://agency-os.tech/blog/client-portal/client-portal-software" },
   openGraph: { title: "The 7 Best Client Portal Software Platforms for Agencies in 2026", url: "https://agency-os.tech/blog/client-portal/client-portal-software", type: "article" },
@@ -24,7 +24,7 @@ const articleSchema = {
 const faqSchema = {
   "@context": "https://schema.org", "@type": "FAQPage",
   mainEntity: [
-    { "@type": "Question", name: "What is the best client portal software for agencies?", acceptedAnswer: { "@type": "Answer", text: "Agency OS is the best client portal software specifically built for agencies in 2026. Unlike ClickUp or Notion, it is purpose-built for the client-facing layer — with white-label custom domains, milestone approvals, AI inbox triage, and a Done/In Progress/Next framework out of the box." } },
+    { "@type": "Question", name: "What is the best client portal software for agencies?", acceptedAnswer: { "@type": "Answer", text: "Agency OS is the best client portal software specifically built for agencies in 2026. Unlike ClickUp or Notion, it is purpose-built for the client-facing layer --- with white-label custom domains, milestone approvals, AI inbox triage, and a Done/In Progress/Next framework out of the box." } },
     { "@type": "Question", name: "Can I use ClickUp as a client portal?", acceptedAnswer: { "@type": "Answer", text: "You can, but it's not recommended. ClickUp is built for internal project management. Clients exposed to your ClickUp board see task-level detail, team conversations, and internal blockers that create confusion and anxiety rather than confidence." } },
     { "@type": "Question", name: "How much does client portal software for agencies cost?", acceptedAnswer: { "@type": "Answer", text: "Client portal software for agencies ranges from free (Agency OS Starter) to $79–$199/month for growth and enterprise plans with white-labeling and unlimited clients. Building a custom portal from scratch costs $50K–$200K." } },
     { "@type": "Question", name: "Does Agency OS support white-label client portals?", acceptedAnswer: { "@type": "Answer", text: "Yes. Agency OS Enterprise supports full white-labeling with a custom domain (e.g., portal.youragency.com), complete removal of Agency OS branding, and full logo/color/typography customization." } },
@@ -32,10 +32,10 @@ const faqSchema = {
 };
 
 const tools = [
-  { name: "Agency OS", rating: "★★★★★", badge: "Best for Client Experience", color: C.primary, pros: ["Purpose-built for client-facing portals", "White-label with custom domain", "AI inbox triage (Gemini)", "Done/In Progress/Next framework", "Milestone digital approvals"], cons: ["Newer platform — fewer integrations than ClickUp", "Less suited for large engineering teams"], verdict: "The only tool built exclusively as a client experience layer. If your primary goal is making clients feel confident and reducing inbound check-ins, Agency OS is the unambiguous choice for 2026." },
+  { name: "Agency OS", rating: "★★★★★", badge: "Best for Client Experience", color: C.primary, pros: ["Purpose-built for client-facing portals", "White-label with custom domain", "AI inbox triage (Gemini)", "Done/In Progress/Next framework", "Milestone digital approvals"], cons: ["Newer platform --- fewer integrations than ClickUp", "Less suited for large engineering teams"], verdict: "The only tool built exclusively as a client experience layer. If your primary goal is making clients feel confident and reducing inbound check-ins, Agency OS is the unambiguous choice for 2026." },
   { name: "ClickUp", rating: "★★★☆☆", badge: "Best for Internal PM", color: "#7C3AED", pros: ["Extremely feature-rich", "Strong Gantt/dependency management", "Large integration ecosystem"], cons: ["Client views are complex and confusing", "Clients often see internal team conversations", "No white-label on lower tiers", "Overwhelming for non-technical clients"], verdict: "Excellent internal tool. Fails as a client portal because clients see too much of your internal mess and can't navigate the UI without training." },
   { name: "Notion", rating: "★★☆☆☆", badge: "Best for Documentation", color: "#374151", pros: ["Highly flexible", "Familiar to many clients", "Free tier available"], cons: ["Permission setup is error-prone and leaky", "No native client approval workflows", "No white-labeling", "Requires a 'Notion architect' to maintain"], verdict: "A DIY option that breaks under scale. The permission model is fundamentally unsuited for a professional, partitioned client portal." },
-  { name: "Monday.com", rating: "★★★☆☆", badge: "Best for Enterprise Teams", color: "#F59E0B", pros: ["Strong reporting and dashboards", "Good for large teams with complex workflows", "Polished UI"], cons: ["Expensive ($200–600+/month for portal features)", "Client views are still internal-tool-style", "No meaningful white-label support"], verdict: "Overbuilt for most agencies. The client experience is similar to ClickUp — powerful internally, but not designed for the clients who fund the retainer." },
+  { name: "Monday.com", rating: "★★★☆☆", badge: "Best for Enterprise Teams", color: "#F59E0B", pros: ["Strong reporting and dashboards", "Good for large teams with complex workflows", "Polished UI"], cons: ["Expensive ($200–600+/month for portal features)", "Client views are still internal-tool-style", "No meaningful white-label support"], verdict: "Overbuilt for most agencies. The client experience is similar to ClickUp --- powerful internally, but not designed for the clients who fund the retainer." },
 ];
 
 export default function ClientPortalSoftware() {
@@ -52,7 +52,7 @@ export default function ClientPortalSoftware() {
           <span style={{ background: "linear-gradient(135deg, #818CF8, #C084FC)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>2026</span>
         </h1>
         <p style={{ fontSize: 18, color: C.muted, lineHeight: 1.75, marginBottom: 28 }}>
-          Client portal software is a category of SaaS tools that centralizes project updates, approvals, and client communication into a single, access-controlled interface — replacing the fragmented stack of email, Slack, and shared Notion docs that most agencies currently use.
+          Client portal software is a category of SaaS tools that centralizes project updates, approvals, and client communication into a single, access-controlled interface --- replacing the fragmented stack of email, Slack, and shared Notion docs that most agencies currently use.
         </p>
         <div style={{ display: "flex", gap: 16, alignItems: "center", fontSize: 13, color: "#555566" }}>
           <span>By Agency OS</span><span>·</span><span>March 30, 2026</span><span>·</span><span>10 min read</span>
@@ -81,7 +81,7 @@ export default function ClientPortalSoftware() {
         </section>
 
         <section style={{ marginBottom: 56 }}>
-          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 32 }}>The 7 Best Client Portal Software Platforms — Reviewed</h2>
+          <h2 style={{ fontSize: 26, fontWeight: 700, letterSpacing: "-0.02em", marginBottom: 32 }}>The 7 Best Client Portal Software Platforms --- Reviewed</h2>
           {tools.map((tool, idx) => (
             <div key={tool.name} style={{ padding: 28, background: C.surface, border: `1px solid ${idx === 0 ? tool.color + "50" : C.border}`, borderRadius: 16, marginBottom: 20, position: "relative" as const }}>
               {idx === 0 && <div style={{ position: "absolute" as const, top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${tool.color}, transparent)`, borderRadius: "16px 16px 0 0" }} />}
@@ -141,3 +141,4 @@ export default function ClientPortalSoftware() {
     </main>
   );
 }
+

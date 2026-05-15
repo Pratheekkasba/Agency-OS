@@ -25,12 +25,12 @@ import {
   addTask,
   updateTask,
   deleteTask,
-  getAllClients, getAllProjects,
+  getAllClients, getAllProjects, resolveOrganizationId,
   updateDenormalizedClientName
 } from "@/lib/firebase/firestore";
 import type { Task, TaskStatus, TaskPriority, Client, Project } from "@/types";
 
-// ─── Types & Config ───────────────────────────────────────
+// --- Types & Config ---
 type Column = { id: TaskStatus; label: string; icon: any; color: string; accent: string };
 
 const COLUMNS: Column[] = [
@@ -59,7 +59,7 @@ const addDays = (base: Date, days: number) => {
   return fmtDate(r);
 };
 
-// ─── Task Card ────────────────────────────────────────────
+// --- Task Card ---
 function TaskCard({ task, isDragging = false, onClick }: { task: Task; isDragging?: boolean; onClick?: () => void }) {
   const priorityConf = PRIORITY_CONFIG[task.priority];
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "done";
@@ -119,7 +119,7 @@ function TaskCard({ task, isDragging = false, onClick }: { task: Task; isDraggin
   );
 }
 
-// ─── Sortable Task Card ───────────────────────────────────
+// --- Sortable Task Card ---
 function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0 : 1 };
@@ -130,7 +130,7 @@ function SortableTaskCard({ task, onClick }: { task: Task; onClick: () => void }
   );
 }
 
-// ─── Kanban Column ────────────────────────────────────────
+// --- Kanban Column ---
 function KanbanColumn({ column, tasks, onAddTask, onClickTask }: {
   column: Column; tasks: Task[]; onAddTask: (s: TaskStatus) => void; onClickTask: (t: Task) => void;
 }) {
@@ -186,7 +186,7 @@ function KanbanColumn({ column, tasks, onAddTask, onClickTask }: {
   );
 }
 
-// ─── Task Edit Panel ─────────────────────────────────────
+// --- Task Edit Panel ---
 function TaskEditPanel({
   task, onClose, onSave, onDelete
 }: {
@@ -322,7 +322,7 @@ function TaskEditPanel({
   );
 }
 
-// ─── Calendar View ────────────────────────────────────────
+// --- Calendar View ---
 function CalendarView({ tasks, onClickTask }: { tasks: Task[]; onClickTask: (t: Task) => void }) {
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -427,7 +427,7 @@ function CalendarView({ tasks, onClickTask }: { tasks: Task[]; onClickTask: (t: 
   );
 }
 
-// ─── New Task Modal ───────────────────────────────────────
+// --- New Task Modal ---
 function NewTaskModal({ defaultStatus, onClose, onSave, clients, projects }: {
   defaultStatus: TaskStatus;
   onClose: () => void;
@@ -555,12 +555,12 @@ function NewTaskModal({ defaultStatus, onClose, onSave, clients, projects }: {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────
+// --- Main Page ---
 type ViewMode = "board" | "calendar";
 
 export default function TasksPage() {
   const { userData } = useAuth();
-  const orgId = userData?.organization_id;
+  const orgId = resolveOrganizationId(userData);
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -579,7 +579,7 @@ export default function TasksPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // ── Fetch all data ──
+  // --- Fetch all data ---
   const loadData = useCallback(async () => {
     if (!orgId) return;
     setIsLoading(true);
@@ -611,7 +611,7 @@ export default function TasksPage() {
     return filteredTasks.filter(t => t.status === status);
   }, [filteredTasks]);
 
-  // ── Drag & Drop ──
+  // --- Drag & Drop ---
   const handleDragStart = (e: DragStartEvent) => setActiveTask(tasks.find(t => t.id === e.active.id) ?? null);
   const handleDragEnd = async (e: DragEndEvent) => {
     const { active, over } = e;
@@ -636,7 +636,7 @@ export default function TasksPage() {
     }
   };
 
-  // ── CRUD ──
+  // --- CRUD ---
   const handleAddTask = (status: TaskStatus) => { setNewTaskStatus(status); setShowNewTask(true); };
 
   const handleSaveNewTask = async (data: Partial<Task>) => {
@@ -827,3 +827,4 @@ export default function TasksPage() {
     </div>
   );
 }
+

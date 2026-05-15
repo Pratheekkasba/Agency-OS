@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { User, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from "firebase/auth";
 import { auth, db } from "@/lib/firebase/config";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -17,6 +17,9 @@ interface AuthContextType {
     user: User | null;
     userData: UserData | null;
     loading: boolean;
+    /** Bumped after refreshUser() so consumers re-read user.emailVerified */
+    userRefreshKey: number;
+    refreshUser: () => Promise<boolean>;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
 }
@@ -25,6 +28,8 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     userData: null,
     loading: true,
+    userRefreshKey: 0,
+    refreshUser: async () => false,
     signInWithGoogle: async () => { },
     signOut: async () => { },
 });
@@ -33,6 +38,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [userRefreshKey, setUserRefreshKey] = useState(0);
+
+    const refreshUser = useCallback(async (): Promise<boolean> => {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return false;
+        await currentUser.reload();
+        setUser(auth.currentUser);
+        setUserRefreshKey((k) => k + 1);
+        return auth.currentUser?.emailVerified ?? false;
+    }, []);
 
     useEffect(() => {
         let unsubDoc: () => void;
@@ -40,6 +55,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
             if (user) {
+                // Refresh JWT so custom claims (organization_id) are available to Firestore rules
+                user.getIdToken(true).catch(() => {});
+
                 const userRef = doc(db, "users", user.uid);
                 unsubDoc = onSnapshot(userRef, async (docSnap) => {
                     if (docSnap.exists()) {
@@ -74,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, userData, loading, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ user, userData, loading, userRefreshKey, refreshUser, signInWithGoogle, signOut }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import {
@@ -13,7 +13,7 @@ import type { Message, MessageIntent, MessageChannel } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { getAllMessages, updateMessage } from "@/lib/firebase/firestore";
 
-// ─── Config ──────────────────────────────────────────────
+// --- Config ---
 const INTENT_CONFIG: Record<MessageIntent, { label: string; icon: any; color: string; bg: string }> = {
   question: { label: "Question", icon: HelpCircle, color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20" },
   approval: { label: "Approval", icon: CheckCircle, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
@@ -46,7 +46,7 @@ const STATUS_LABELS: Record<string, string> = {
   sent: "Replied", resolved: "Resolved", archived: "Archived",
 };
 
-// ─── Helpers ──────────────────────────────────────────────
+// --- Helpers ---
 function timeAgo(millis: number) {
   const diff = Date.now() - millis;
   const m = Math.floor(diff / 60000);
@@ -58,7 +58,7 @@ function timeAgo(millis: number) {
   return `${d}d ago`;
 }
 
-// ─── Main Page ────────────────────────────────────────────
+// --- Main Page ---
 export default function MessagesPage() {
   const { userData } = useAuth();
   const orgId = userData?.organization_id;
@@ -421,3 +421,4 @@ export default function MessagesPage() {
     </div>
   );
 }
+

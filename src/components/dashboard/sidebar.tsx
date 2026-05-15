@@ -4,19 +4,30 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard, Users, FileText, Settings, LogOut,
-  Folder, CheckSquare, UsersRound, MessageSquare, PenTool,
-  ChevronDown, CreditCard, UserCircle
+  LayoutDashboard,
+  Users,
+  Settings,
+  LogOut,
+  Folder,
+  CheckSquare,
+  UsersRound,
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  UserCircle,
 } from "lucide-react";
 import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase/config";
+import { auth, db } from "@/lib/firebase/config";
+import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
+import { useSidebar } from "@/context/SidebarContext";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
   href: string;
   label: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   badge?: number;
   badgeColor?: string;
 };
@@ -38,11 +49,9 @@ const NAV_INBOX: NavItem[] = [
 
 const NAV_TEAM: NavItem[] = [
   { href: "/dashboard/team", label: "Team", icon: UsersRound },
-  { href: "/dashboard/whiteboard", label: "Whiteboard", icon: PenTool },
 ];
 
-// Extracted Bell icon to avoid missing import
-function Bell(props: any) {
+function Bell(props: { className?: string }) {
   return (
     <svg
       {...props}
@@ -62,61 +71,81 @@ function Bell(props: any) {
   );
 }
 
-function SidebarItem({ item, isActive }: { item: NavItem; isActive: boolean }) {
+function SidebarItem({
+  item,
+  isActive,
+  collapsed,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  collapsed: boolean;
+}) {
   const Icon = item.icon;
 
   return (
     <Link
       href={item.href}
+      title={collapsed ? item.label : undefined}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 relative overflow-hidden group",
+        collapsed && "justify-center px-2",
         isActive
           ? "bg-[#5B5CF6]/10 text-white font-semibold"
           : "text-[#9CA3AF] hover:text-[#E5E7EB] hover:bg-[#1A1A24]/60 font-medium"
       )}
     >
-      {/* Active Left Border Accent */}
-      {isActive && (
+      {isActive && !collapsed && (
         <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#5B5CF6] rounded-r-md" />
       )}
 
-      <Icon className={cn(
-        "w-[18px] h-[18px] shrink-0 transition-colors duration-150",
-        isActive ? "text-[#5B5CF6]" : "text-[#6B7280]"
-      )} />
-      
-      <span className="flex-1 text-[14px] whitespace-nowrap tracking-wide">{item.label}</span>
+      <Icon
+        className={cn(
+          "w-[18px] h-[18px] shrink-0 transition-colors duration-150",
+          isActive ? "text-[#5B5CF6]" : "text-[#6B7280]"
+        )}
+      />
 
-      {/* Badge Array (Right Aligned) */}
-      {item.badge !== undefined && item.badge > 0 && (
-        <span className={cn(
-          "text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shrink-0 text-white shadow-sm ml-auto",
-          item.badgeColor
-        )}>
-          {item.badge}
-        </span>
+      {!collapsed && (
+        <>
+          <span className="flex-1 text-[14px] whitespace-nowrap tracking-wide">{item.label}</span>
+          {item.badge !== undefined && item.badge > 0 && (
+            <span
+              className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shrink-0 text-white shadow-sm ml-auto",
+                item.badgeColor
+              )}
+            >
+              {item.badge}
+            </span>
+          )}
+        </>
       )}
     </Link>
   );
 }
 
-function SectionLabel({ label }: { label: string }) {
+function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean }) {
+  if (collapsed) return <div className="h-2 shrink-0" aria-hidden />;
   return (
-    <div className="px-3 mb-2 mt-4">
-      <p className="text-[11px] font-bold text-[#4B5563] uppercase tracking-[0.1em] opacity-80">{label}</p>
+    <div className="px-3 mb-2 mt-4 first:mt-0">
+      <p className="text-[11px] font-bold text-[#4B5563] uppercase tracking-[0.1em] opacity-80">
+        {label}
+      </p>
     </div>
   );
 }
 
 function Divider() {
-  return <div className="h-px bg-[#1A1A24]/50 mx-3 my-3" />;
+  return <div className="h-px bg-[#1A1A24]/50 mx-3 my-3 shrink-0" />;
 }
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userData } = useAuth();
+  const { collapsed, toggle } = useSidebar();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [agencyName, setAgencyName] = useState("My Agency");
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
@@ -124,7 +153,6 @@ export function DashboardSidebar() {
     router.push("/login");
   };
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -136,138 +164,234 @@ export function DashboardSidebar() {
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-    }
+    };
   }, [isMenuOpen]);
 
-  const displayName = user?.displayName || userData?.name || "Mani Pratheek";
-  const initials = displayName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-  const agencyName = userData?.agencyName || "AgencyOS";
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAgencyName() {
+      if (userData?.agencyName) {
+        setAgencyName(userData.agencyName);
+        return;
+      }
+
+      const orgId = userData?.organization_id;
+      if (orgId) {
+        try {
+          const orgSnap = await getDoc(doc(db, "organizations", orgId));
+          if (!cancelled && orgSnap.exists()) {
+            const name = orgSnap.data()?.name as string | undefined;
+            if (name?.trim()) {
+              setAgencyName(name.trim());
+              return;
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
+      if (!cancelled) {
+        setAgencyName(user?.displayName?.split(" ")[0] ? `${user.displayName.split(" ")[0]}'s Agency` : "My Agency");
+      }
+    }
+
+    loadAgencyName();
+    return () => {
+      cancelled = true;
+    };
+  }, [userData?.agencyName, userData?.organization_id, user?.displayName]);
+
+  const displayName = user?.displayName || userData?.name || "Account";
+  const initials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const agencyInitials = agencyName.substring(0, 2).toUpperCase();
 
   return (
-    <aside className="hidden md:flex w-[260px] h-screen flex-col border-r border-[#1A1A24] bg-[#0B0B0F] shrink-0 sticky top-0">
-      
-      {/* Top Section: Identity Area */}
-      <div className="h-[72px] shrink-0 border-b border-[#1A1A24] flex items-center justify-between px-5">
-        <div className="flex items-center gap-3 w-full hover:opacity-80 transition-opacity cursor-pointer">
+    <aside
+      className={cn(
+        "hidden md:grid h-dvh max-h-dvh shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] border-r border-[#1A1A24] bg-[#0B0B0F] transition-[width] duration-200 ease-out",
+        collapsed ? "w-[72px]" : "w-[260px]"
+      )}
+    >
+      <div
+        className={cn(
+          "h-[72px] border-b border-[#1A1A24] flex items-center shrink-0",
+          collapsed ? "justify-center px-2" : "px-5"
+        )}
+      >
+        <Link
+          href="/dashboard"
+          className={cn(
+            "flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity",
+            collapsed && "justify-center"
+          )}
+          title={collapsed ? agencyName : undefined}
+        >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#A4A6FF] to-[#5B5CF6] flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(91,92,246,0.2)]">
             <span className="text-[#1200A3] text-[11px] font-black uppercase tracking-tighter">
-              {agencyName.substring(0, 2)}
+              {agencyInitials}
             </span>
           </div>
-          <div className="flex items-center justify-between flex-1 min-w-0">
-            <span className="text-[15px] font-bold text-white tracking-tight truncate font-headline pb-0.5">
+          {!collapsed && (
+            <span className="text-[15px] font-bold text-white tracking-tight truncate font-headline">
               {agencyName}
             </span>
-            <ChevronDown className="w-4 h-4 text-[#6B7280] shrink-0" />
-          </div>
-        </div>
+          )}
+        </Link>
       </div>
 
-      {/* Main Navigation (Non-scrollable) */}
-      <nav className="flex-1 px-3 py-4 flex flex-col overflow-hidden">
-        
-        {/* Overview */}
+      <nav className="sidebar-nav-scroll px-3 py-4">
         <div className="space-y-1.5">
-          {NAV_MAIN.map(item => (
-            <SidebarItem key={item.href} item={item} isActive={pathname === item.href} />
+          {NAV_MAIN.map((item) => (
+            <SidebarItem
+              key={item.href}
+              item={item}
+              isActive={pathname === item.href}
+              collapsed={collapsed}
+            />
           ))}
         </div>
 
         <Divider />
-
-        {/* WORK */}
-        <SectionLabel label="Work" />
+        <SectionLabel label="Work" collapsed={collapsed} />
         <div className="space-y-1.5">
-          {NAV_WORK.map(item => (
-            <SidebarItem key={item.href} item={item} isActive={pathname.startsWith(item.href)} />
+          {NAV_WORK.map((item) => (
+            <SidebarItem
+              key={item.href}
+              item={item}
+              isActive={pathname.startsWith(item.href)}
+              collapsed={collapsed}
+            />
           ))}
         </div>
 
         <Divider />
-
-        {/* INBOX */}
-        <SectionLabel label="Inbox" />
+        <SectionLabel label="Inbox" collapsed={collapsed} />
         <div className="space-y-1.5">
-          {NAV_INBOX.map(item => (
-            <SidebarItem key={item.href} item={item} isActive={pathname.startsWith(item.href)} />
+          {NAV_INBOX.map((item) => (
+            <SidebarItem
+              key={item.href}
+              item={item}
+              isActive={pathname.startsWith(item.href)}
+              collapsed={collapsed}
+            />
           ))}
         </div>
 
         <Divider />
-
-        {/* TEAM */}
-        <SectionLabel label="Team" />
+        <SectionLabel label="Team" collapsed={collapsed} />
         <div className="space-y-1.5">
-          {NAV_TEAM.map(item => (
-            <SidebarItem key={item.href} item={item} isActive={pathname.startsWith(item.href)} />
+          {NAV_TEAM.map((item) => (
+            <SidebarItem
+              key={item.href}
+              item={item}
+              isActive={pathname.startsWith(item.href)}
+              collapsed={collapsed}
+            />
           ))}
+        </div>
+
+        <Divider />
+        <div className="space-y-1.5 pb-2">
+          <SidebarItem
+            item={{ href: "/dashboard/settings", label: "Settings", icon: Settings }}
+            isActive={pathname.startsWith("/dashboard/settings")}
+            collapsed={collapsed}
+          />
         </div>
       </nav>
 
-      {/* Bottom Section (Fixed) */}
-      <div className="p-4 border-t border-[#1A1A24] space-y-4 shrink-0 bg-[#0B0B0F]">
-        
-        {/* Settings */}
-        <SidebarItem 
-          item={{ href: "/dashboard/settings", label: "Settings", icon: Settings }} 
-          isActive={pathname.startsWith("/dashboard/settings")} 
-        />
-        
-        {/* User Profile Block */}
-        <div className="relative" ref={menuRef}>
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={cn(
-              "flex items-center w-full gap-3 px-3 py-2.5 rounded-xl transition-colors text-left",
-              isMenuOpen ? "bg-[#1A1A24]" : "hover:bg-[#1A1A24]/60"
-            )}
-           >
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2D2D3D] to-[#1F1F2B] flex items-center justify-center text-[#E5E7EB] text-[12px] font-bold shrink-0 shadow-inner border border-[#374151]">
-              {initials}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-[14px] font-bold text-white truncate leading-tight">{displayName}</p>
-              <p className="text-[12px] text-[#9CA3AF] font-medium leading-none mt-1">Agency Pro</p>
-            </div>
-          </button>
-
-          {/* Profile Dropdown Menu */}
-          {isMenuOpen && (
-            <div className="absolute bottom-[calc(100%+8px)] left-0 w-full bg-[#131317] border border-[#2D2D3D] rounded-xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-150">
-              <div className="p-1.5 flex flex-col gap-0.5">
-                <Link
-                  href="/dashboard/settings"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-[#D1D5DB] hover:text-white hover:bg-[#1A1A24] rounded-lg transition-colors"
-                >
-                  <UserCircle className="w-4 h-4 text-[#9CA3AF]" />
-                  Profile
-                </Link>
-                <button
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-[#D1D5DB] hover:text-white hover:bg-[#1A1A24] rounded-lg transition-colors text-left w-full"
-                >
-                  <CreditCard className="w-4 h-4 text-[#9CA3AF]" />
-                  Billing
-                </button>
-                <div className="h-px bg-[#1A1A24] my-1" />
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    handleSignOut();
-                  }}
-                  className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors text-left w-full"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Log out
-                </button>
-              </div>
-            </div>
+      <div className="border-t border-[#1A1A24] bg-[#0B0B0F] shrink-0">
+        <div
+          className={cn(
+            "flex items-center border-b border-[#1A1A24]/60",
+            collapsed ? "justify-center p-2" : "justify-end px-3 py-2"
           )}
+        >
+          <button
+            type="button"
+            onClick={toggle}
+            className="p-2 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1A1A24] transition-colors"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+
+        <div className={cn("p-3", collapsed && "px-2")}>
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              title={collapsed ? displayName : undefined}
+              className={cn(
+                "flex items-center w-full gap-3 rounded-xl transition-colors text-left",
+                collapsed ? "justify-center p-2" : "px-3 py-2.5",
+                isMenuOpen ? "bg-[#1A1A24]" : "hover:bg-[#1A1A24]/60"
+              )}
+            >
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2D2D3D] to-[#1F1F2B] flex items-center justify-center text-[#E5E7EB] text-[12px] font-bold shrink-0 shadow-inner border border-[#374151]">
+                {initials}
+              </div>
+              {!collapsed && (
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-[14px] font-bold text-white truncate leading-tight">
+                    {displayName}
+                  </p>
+                  <p className="text-[12px] text-[#9CA3AF] font-medium leading-none mt-1 truncate">
+                    {user?.email}
+                  </p>
+                </div>
+              )}
+            </button>
+
+            {isMenuOpen && (
+              <div className="absolute bottom-[calc(100%+8px)] left-0 w-full min-w-[200px] bg-[#131317] border border-[#2D2D3D] rounded-xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden z-50">
+                <div className="p-1.5 flex flex-col gap-0.5">
+                  <Link
+                    href="/dashboard/settings"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-[#D1D5DB] hover:text-white hover:bg-[#1A1A24] rounded-lg transition-colors"
+                  >
+                    <UserCircle className="w-4 h-4 text-[#9CA3AF]" />
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-[#D1D5DB] hover:text-white hover:bg-[#1A1A24] rounded-lg transition-colors text-left w-full"
+                  >
+                    <CreditCard className="w-4 h-4 text-[#9CA3AF]" />
+                    Billing
+                  </button>
+                  <div className="h-px bg-[#1A1A24] my-1" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-medium text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-colors text-left w-full"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Log out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
     </aside>
   );
 }

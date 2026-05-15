@@ -9,10 +9,10 @@ import {
 } from "lucide-react";
 import { AddClientModal } from "@/components/dashboard/add-client-modal";
 import { useAuth } from "@/context/AuthContext";
-import { getAllClients } from "@/lib/firebase/firestore";
+import { getAllClients, resolveOrganizationId } from "@/lib/firebase/firestore";
 import { toast } from "sonner";
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+// --- helpers ---
 
 const getDaysSince = (d: string) => {
   if (!d) return Infinity;
@@ -51,7 +51,7 @@ const PALETTE = [
 ];
 const avatarBg = (name: string) => PALETTE[name.charCodeAt(0) % PALETTE.length];
 
-// ─── Grid Card ───────────────────────────────────────────────────────────────
+// --- Grid Card ---
 
 function ClientCard({ client }: { client: any }) {
   const router = useRouter();
@@ -182,7 +182,7 @@ function ClientCard({ client }: { client: any }) {
   );
 }
 
-// ─── List Row ─────────────────────────────────────────────────────────────────
+// --- List Row ---
 
 function ClientRow({ client }: { client: any }) {
   const router = useRouter();
@@ -202,7 +202,7 @@ function ClientRow({ client }: { client: any }) {
             <p className="text-sm font-semibold text-white group-hover:text-[#A4A6FF] transition-colors">
               {client.name}
             </p>
-            <p className="text-[11px] text-[#6B7280]">{client.email || "—"}</p>
+            <p className="text-[11px] text-[#6B7280]">{client.email || "---"}</p>
           </div>
         </div>
       </td>
@@ -237,7 +237,7 @@ function ClientRow({ client }: { client: any }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// --- Page ---
 
 export default function ClientsPage() {
   const router = useRouter();
@@ -251,11 +251,15 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
-    const orgId = userData?.organization_id;
+    const orgId = resolveOrganizationId(userData);
     if (!orgId) return;
     setIsLoading(true);
-    try { setClients(await getAllClients(orgId)); }
-    catch (err) { console.error(err); }
+    try {
+      setClients(await getAllClients(orgId));
+    } catch (err) {
+      console.error("Failed to load clients:", err);
+      toast.error("Failed to load clients. Check console for details.");
+    }
     finally { setIsLoading(false); }
   }, [userData]);
 
@@ -273,7 +277,7 @@ export default function ClientsPage() {
   return (
     <div className="h-full overflow-y-auto p-8 max-w-7xl mx-auto space-y-6 animate-fade-in pb-20">
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* --- Header --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -291,7 +295,7 @@ export default function ClientsPage() {
         </button>
       </div>
 
-      {/* ── Toolbar ────────────────────────────────────────────────────────── */}
+      {/* --- Toolbar --- */}
       <div className="flex flex-col sm:flex-row gap-3 items-center">
         {/* Search */}
         <div className="relative w-full sm:w-72 group">
@@ -339,7 +343,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* ── Content ────────────────────────────────────────────────────────── */}
+      {/* --- Content --- */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array(6).fill(0).map((_, i) => (
@@ -415,3 +419,4 @@ export default function ClientsPage() {
     </div>
   );
 }
+

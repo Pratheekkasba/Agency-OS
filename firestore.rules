@@ -2,36 +2,66 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: only the owner can read/write their own doc
+    // ─── Helper: check user belongs to the org of this doc ───────────────
+    function belongsToOrg(orgId) {
+      return request.auth != null
+        && request.auth.token.organization_id == orgId;
+    }
+
+    // ─── Users ────────────────────────────────────────────────────────────
+    // A user can only read/write their own profile doc
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId;
     }
 
-    // Clients: any authenticated user can read clients matching their agencyId,
-    // and create clients where agencyId == their own uid (agency owners).
-    // For MVP we use auth-only guard; agencyId filtering is enforced in queries.
+    // ─── Organizations ────────────────────────────────────────────────────
+    // Members can only read their own org; no client-side writes allowed
+    match /organizations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow write: if false; // Only Admin SDK (server-side) may write orgs
+    }
+
+    // ─── Clients ─────────────────────────────────────────────────────────
     match /clients/{clientId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
+      allow create: if request.auth != null
+        && request.auth.token.organization_id == request.resource.data.organization_id;
     }
 
-    // Updates: any authenticated user can read and create updates.
-    // agencyId isolation is enforced by query-side where() filters.
+    // ─── Projects ────────────────────────────────────────────────────────
+    match /projects/{projectId} {
+      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
+      allow create: if request.auth != null
+        && request.auth.token.organization_id == request.resource.data.organization_id;
+    }
+
+    // ─── Tasks ───────────────────────────────────────────────────────────
+    match /tasks/{taskId} {
+      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
+      allow create: if request.auth != null
+        && request.auth.token.organization_id == request.resource.data.organization_id;
+    }
+
+    // ─── Messages ────────────────────────────────────────────────────────
+    match /messages/{messageId} {
+      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
+      allow create: if request.auth != null
+        && request.auth.token.organization_id == request.resource.data.organization_id;
+    }
+
+    // ─── Updates ─────────────────────────────────────────────────────────
     match /updates/{updateId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null;
+      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
+      allow create: if request.auth != null
+        && request.auth.token.organization_id == request.resource.data.organization_id;
     }
 
-    // Legacy collections
-    match /tasks/{document=**} {
-      allow read: if true;
-      allow write: if request.auth != null;
-    }
-
-    match /messages/{document=**} {
-      allow read, write: if request.auth != null;
+    // ─── Whiteboards ─────────────────────────────────────────────────────
+    match /whiteboards/{whiteboardId} {
+      allow read, update, delete: if belongsToOrg(resource.data.organization_id);
+      allow create: if request.auth != null
+        && request.auth.token.organization_id == request.resource.data.organization_id;
     }
   }
 }

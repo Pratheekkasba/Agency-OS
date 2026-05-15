@@ -24,23 +24,6 @@ export default function ClientDashboardPage() {
     try {
       const data = JSON.parse(dataStr);
       
-      // Inject dummy update data if this is Velvet Digital for testing
-      if (data.id === "OS-A92") {
-        data.lastUpdate = {
-          done: ["Finished homepage design", "Approved color palette"],
-          progress: ["Working on backend API", "Setting up database schema"],
-          next: ["Payment integration", "User authentication flow"],
-          timestamp: "Just now"
-        };
-      } else if (data.id === "OS-X4F") {
-        data.lastUpdate = {
-          done: ["Initial consultation"],
-          progress: ["Researching competitors"],
-          next: ["Creating moodboard"],
-          timestamp: "2 days ago"
-        };
-      }
-      
       setClientData(data);
     } catch (e) {
       console.error("Failed to parse client data");

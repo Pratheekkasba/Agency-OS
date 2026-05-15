@@ -1,18 +1,28 @@
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
 
 let adminApp: App;
 
 if (!getApps().length) {
-    // If we don't have a service account key provided via env vars,
-    // we attempt to initialize with Application Default Credentials (ADC).
-    // In development, if this fails, we can fall back to the project ID.
     try {
-        adminApp = initializeApp({
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        });
+        // Use service account JSON if provided (recommended for production).
+        // Set FIREBASE_SERVICE_ACCOUNT_JSON env var to the full JSON string
+        // from Firebase Console → Project Settings → Service Accounts.
+        if (
+            process.env.FIREBASE_SERVICE_ACCOUNT_JSON &&
+            process.env.FIREBASE_SERVICE_ACCOUNT_JSON !== "PASTE_SERVICE_ACCOUNT_JSON_HERE"
+        ) {
+            const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+            adminApp = initializeApp({ credential: cert(serviceAccount) });
+        } else {
+            // Fallback: Application Default Credentials (works on GCP / Cloud Run / Vercel)
+            adminApp = initializeApp({
+                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+            });
+        }
     } catch (error) {
-        console.error("Firebase Admin Initialization Error", error);
+        console.error("[Agency OS] Firebase Admin Initialization Error:", error);
         adminApp = getApps()[0];
     }
 } else {
@@ -20,5 +30,6 @@ if (!getApps().length) {
 }
 
 const adminDb = getFirestore(adminApp);
+const adminAuth = getAuth(adminApp);
 
-export { adminApp, adminDb };
+export { adminApp, adminDb, adminAuth };

@@ -8,7 +8,8 @@ import { ensureUserDoc } from "@/lib/firebase/firestore";
 
 interface UserData {
     role?: "agency" | "client";
-    agencyId?: string;
+    /** Single source of truth for org membership. Do not use agencyId. */
+    organization_id?: string;
     [key: string]: any;
 }
 

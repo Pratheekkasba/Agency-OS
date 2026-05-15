@@ -2,365 +2,415 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, Clock, ExternalLink, MoreVertical, LayoutGrid, CheckCircle2, Eye, FileText, Copy } from "lucide-react";
+import {
+  Search, Plus, MoreVertical, LayoutGrid, Eye,
+  Copy, Sparkles, Send, TrendingUp, Users,
+  Clock, ChevronRight, List,
+} from "lucide-react";
 import { AddClientModal } from "@/components/dashboard/add-client-modal";
 import { useAuth } from "@/context/AuthContext";
-import { getClients } from "@/lib/firebase/firestore";
+import { getAllClients } from "@/lib/firebase/firestore";
 import { toast } from "sonner";
 
-const isNeedsUpdate = (dateString: string) => {
-  if (!dateString) return true;
-  const updateDate = new Date(dateString);
-  const diffDays = Math.ceil(Math.abs(new Date().getTime() - updateDate.getTime()) / (1000 * 60 * 60 * 24));
-  return diffDays > 2;
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+const getDaysSince = (d: string) => {
+  if (!d) return Infinity;
+  return Math.floor(Math.abs(Date.now() - new Date(d).getTime()) / 86400000);
 };
 
-const getTimeAgo = (dateString: string) => {
-  if (!dateString) return 'Never';
-  const diffHours = Math.floor(Math.abs(new Date().getTime() - new Date(dateString).getTime()) / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffHours / 24);
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours} hours ago`;
-  if (diffDays === 1) return '1 day ago';
-  return `${diffDays} days ago`;
+const isNeedsUpdate = (d: string) => getDaysSince(d) > 2;
+
+const getTimeAgo = (d: string) => {
+  if (!d) return "Never";
+  const h = Math.floor(Math.abs(Date.now() - new Date(d).getTime()) / 3600000);
+  if (h < 1) return "Just now";
+  if (h < 24) return `${h}h ago`;
+  const days = Math.floor(h / 24);
+  return days === 1 ? "1 day ago" : `${days} days ago`;
 };
+
+function progressColor(p: number) {
+  if (p >= 75) return "from-[#10B981] to-[#34D399]";
+  if (p >= 40) return "from-[#5B5CF6] to-[#8183FF]";
+  return "from-[#F59E0B] to-[#FCD34D]";
+}
+
+function statusStyle(s?: string) {
+  if (s === "Active")  return "bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20";
+  if (s === "Paused")  return "bg-[#6B7280]/10 text-[#9CA3AF] border-[#6B7280]/20";
+  if (s === "At Risk") return "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20";
+  return "bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20";
+}
+
+// Stable avatar color from name
+const PALETTE = [
+  "bg-[#5B5CF6]", "bg-[#0EA5E9]", "bg-[#10B981]",
+  "bg-[#F59E0B]", "bg-[#8B5CF6]", "bg-[#EC4899]",
+  "bg-[#14B8A6]", "bg-[#EF4444]",
+];
+const avatarBg = (name: string) => PALETTE[name.charCodeAt(0) % PALETTE.length];
+
+// ─── Grid Card ───────────────────────────────────────────────────────────────
 
 function ClientCard({ client }: { client: any }) {
   const router = useRouter();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const needsUpdate = isNeedsUpdate(client.lastUpdateDate) && client.status !== 'Paused';
+  const [menuOpen, setMenuOpen] = useState(false);
+  const progress = client.progress || 0;
 
   useEffect(() => {
-    if (!isMenuOpen) return;
-    const close = () => setIsMenuOpen(false);
-    const timeout = setTimeout(() => document.addEventListener('click', close), 0);
-    return () => {
-      clearTimeout(timeout);
-      document.removeEventListener('click', close);
-    };
-  }, [isMenuOpen]);
-
-  const handleCopyId = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(client.accessId || "");
-    toast.success("Access ID copied!");
-    setIsMenuOpen(false);
-  };
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    const t = setTimeout(() => document.addEventListener("click", close), 0);
+    return () => { clearTimeout(t); document.removeEventListener("click", close); };
+  }, [menuOpen]);
 
   return (
-    <div 
+    <div
       onClick={() => router.push(`/dashboard/clients/${client.id}`)}
-      className="bg-[#131317] border border-[#1F1F2B] hover:border-[#5B5CF6]/40 hover:shadow-[0_0_30px_rgba(91,92,246,0.15)] rounded-2xl p-6 transition-all duration-300 group flex flex-col h-full cursor-pointer hover:scale-[1.02] relative"
+      className="bg-[#131317] border border-[#1F1F2B] hover:border-[#2D2D3D] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden transition-all duration-300 group cursor-pointer flex flex-col"
     >
-      {/* Card Header */}
-      <div className="flex items-start justify-between mb-5">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#1A1A24] to-[#252533] border border-[#2D2D3D] flex items-center justify-center shadow-inner group-hover:border-[#5B5CF6]/30 transition-colors">
-            <span className="text-[#A4A6FF] font-bold text-sm uppercase">{client.name.substring(0, 2)}</span>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-[17px] font-bold text-white tracking-tight">{client.name}</h3>
-              <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                client.status === 'Active' ? 'bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/20' : 'bg-[#6B7280]/10 text-[#6B7280] border border-[#6B7280]/20'
-              }`}>
-                {client.status}
+      {/* Top bar */}
+      <div className={`h-[2px] w-full bg-gradient-to-r ${progressColor(progress)}`} />
+
+      <div className="p-5 flex flex-col flex-1 gap-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-11 h-11 rounded-xl ${avatarBg(client.name)} flex items-center justify-center flex-shrink-0`}>
+              <span className="text-white font-black text-sm uppercase">
+                {client.name.substring(0, 2)}
               </span>
             </div>
-            <p className="text-[11px] font-medium text-[#6B7280] font-mono mt-0.5 tracking-wider">{client.accessId || "NO-ID"}</p>
-          </div>
-        </div>
-        <div className="relative">
-          <button 
-            onClick={(e) => { e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-            className="text-[#6B7280] hover:text-white p-1 rounded-md transition-colors hover:bg-[#1A1A24]"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </button>
-          
-          {isMenuOpen && (
-            <div 
-              className="absolute right-0 top-full mt-1 w-44 bg-[#1A1A24] border border-[#2D2D3D] rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden z-20 py-1" 
-              onClick={e => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => { setIsMenuOpen(false); router.push(`/dashboard/clients/${client.id}`); }} 
-                className="w-full text-left px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#252533] hover:text-white transition-colors flex items-center gap-2.5"
-              >
-                 <Eye className="w-4 h-4 text-[#A4A6FF]" /> View Details
-              </button>
-              <button 
-                onClick={() => { setIsMenuOpen(false); router.push(`/dashboard/updates?client=${client.id}`); }} 
-                className="w-full text-left px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#252533] hover:text-white transition-colors flex items-center gap-2.5"
-              >
-                 <FileText className="w-4 h-4 text-[#A4A6FF]" /> Create Update
-              </button>
-              <div className="h-px w-full bg-[#2D2D3D] my-1"></div>
-              <button 
-                onClick={handleCopyId} 
-                className="w-full text-left px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#252533] hover:text-white transition-colors flex items-center gap-2.5"
-              >
-                 <Copy className="w-4 h-4 text-[#A4A6FF]" /> Copy Access ID
-              </button>
+            <div className="min-w-0">
+              <h3 className="text-[15px] font-bold text-white truncate leading-snug">
+                {client.name}
+              </h3>
+              <p className="text-[11px] text-[#6B7280] truncate mt-0.5">
+                {client.email || "No email"}
+              </p>
             </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Card Body - Content */}
-      <div className="flex-1">
-        {/* Progress */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-[#9CA3AF] uppercase tracking-wider">Progress</span>
-            <span className="text-xs font-bold text-white bg-[#1A1A24] px-1.5 py-0.5 rounded border border-[#2D2D3D]">{client.progress || 0}%</span>
           </div>
-          <div className="h-1.5 w-full bg-[#1F1F2B] rounded-full overflow-hidden">
-            <div className="h-full bg-[#5B5CF6] rounded-full" style={{ width: `${client.progress || 0}%` }} />
-          </div>
-        </div>
-
-        {/* Update Preview & Status */}
-        <div className="p-3.5 rounded-xl bg-[#0D0D13] border border-[#1F1F2B] group-hover:bg-[#131317] transition-colors h-[84px] overflow-hidden">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider">Latest Update</span>
-            <span className="text-[10px] font-medium text-[#4B5563]">{getTimeAgo(client.lastUpdateDate)}</span>
-          </div>
-          {client.lastUpdateText ? (
-            <p className="text-xs text-[#9CA3AF] line-clamp-2 leading-relaxed">
-              "{client.lastUpdateText}"
-            </p>
-          ) : (
-            <p className="text-xs text-[#6B7280] italic">No updates available.</p>
-          )}
-        </div>
-
-        {/* Smart Insights */}
-        <div className="mt-4 flex flex-col gap-1.5 px-1 min-h-[36px]">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${needsUpdate ? 'bg-[#EF4444] shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-[#10B981] shadow-[0_0_8px_rgba(16,185,129,0.6)]'}`} />
-            <span className="text-[11.5px] font-medium text-[#9CA3AF]">
-              Last updated <span className="text-[#E5E7EB]">{getTimeAgo(client.lastUpdateDate)}</span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${statusStyle(client.status)}`}>
+              {client.status ?? "Active"}
             </span>
+            <div className="relative">
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+                className="text-[#3D3D4D] hover:text-white p-1.5 rounded-lg hover:bg-[#1A1A24] transition-colors"
+              >
+                <MoreVertical className="w-3.5 h-3.5" />
+              </button>
+              {menuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-1 w-44 bg-[#1A1A24] border border-[#2D2D3D] rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] overflow-hidden z-20 py-1"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() => { setMenuOpen(false); router.push(`/dashboard/clients/${client.id}`); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#252533] transition-colors flex items-center gap-2"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-[#6B7280]" /> View Details
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); router.push(`/dashboard/updates?client=${client.id}`); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#252533] transition-colors flex items-center gap-2"
+                  >
+                    <Send className="w-3.5 h-3.5 text-[#6B7280]" /> Send Update
+                  </button>
+                  <div className="h-px bg-[#2D2D3D] my-1" />
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(client.accessId || "");
+                      toast.success("Access ID copied!");
+                      setMenuOpen(false);
+                    }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#252533] transition-colors flex items-center gap-2"
+                  >
+                    <Copy className="w-3.5 h-3.5 text-[#6B7280]" /> Copy Access ID
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          {needsUpdate && (
-            <p className="text-[11px] font-medium text-[#EF4444]/90 ml-4 flex items-center gap-1.5">
-              Client may follow up soon
-            </p>
-          )}
         </div>
-      </div>
 
-      {/* Card Actions */}
-      <div className="flex items-center gap-3 mt-5 pt-5 border-t border-[#1F1F2B]">
-        <button 
-          onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/clients/${client.id}`); }}
-          className="flex-1 bg-[#1A1A24] hover:bg-[#252533] border border-[#2D2D3D] hover:border-[#4B5563] text-white text-xs font-bold rounded-lg py-2.5 transition-all flex items-center justify-center gap-2"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          View Details
-        </button>
-        <button 
-          onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/updates?client=${client.id}`); }}
-          className="flex-1 bg-[#5B5CF6]/10 hover:bg-[#5B5CF6] border border-[#5B5CF6]/30 hover:border-[#5B5CF6] text-[#A4A6FF] hover:text-white text-xs font-bold rounded-lg py-2.5 transition-all flex items-center justify-center gap-2 hover:shadow-[0_4px_15px_rgba(91,92,246,0.3)]"
-        >
-          Create Update
-        </button>
+        {/* Progress */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-semibold text-[#6B7280] uppercase tracking-widest">Progress</span>
+            <span className="text-[11px] font-bold text-white tabular-nums">{progress}%</span>
+          </div>
+          <div className="h-1.5 w-full bg-[#1A1A24] rounded-full overflow-hidden">
+            <div
+              className={`h-full bg-gradient-to-r ${progressColor(progress)} rounded-full transition-all duration-700`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Update preview */}
+        <div className="bg-[#0D0D13] border border-[#1F1F2B] rounded-xl p-3.5 flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[9px] font-bold text-[#3D3D4D] uppercase tracking-widest">Latest Update</span>
+            <span className="text-[10px] text-[#6B7280]">{getTimeAgo(client.lastUpdateDate)}</span>
+          </div>
+          <p className="text-[12px] text-[#6B7280] italic line-clamp-2 leading-relaxed">
+            {client.lastUpdateText || "No updates yet."}
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2.5 pt-1 border-t border-[#1A1A24]">
+          <button
+            onClick={e => { e.stopPropagation(); router.push(`/dashboard/clients/${client.id}`); }}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-transparent hover:bg-[#1A1A24] border border-[#1F1F2B] hover:border-[#2D2D3D] text-[#6B7280] hover:text-white text-[11px] font-semibold rounded-xl py-2.5 transition-all"
+          >
+            <Eye className="w-3.5 h-3.5" /> View
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); router.push(`/dashboard/updates?client=${client.id}`); }}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-[#5B5CF6]/10 hover:bg-[#5B5CF6] border border-[#5B5CF6]/25 hover:border-[#5B5CF6] text-[#A4A6FF] hover:text-white text-[11px] font-semibold rounded-xl py-2.5 transition-all hover:shadow-[0_4px_15px_rgba(91,92,246,0.25)]"
+          >
+            <Send className="w-3.5 h-3.5" /> Send Update
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
+// ─── List Row ─────────────────────────────────────────────────────────────────
+
+function ClientRow({ client }: { client: any }) {
+  const router = useRouter();
+  const progress = client.progress || 0;
+
+  return (
+    <tr
+      onClick={() => router.push(`/dashboard/clients/${client.id}`)}
+      className="hover:bg-[#1A1A24] hover:shadow-[inset_2px_0_0_0_#5B5CF6] transition-all cursor-pointer group"
+    >
+      <td className="py-3.5 px-5">
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-lg ${avatarBg(client.name)} flex items-center justify-center flex-shrink-0`}>
+            <span className="text-white font-bold text-xs uppercase">{client.name.substring(0, 2)}</span>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white group-hover:text-[#A4A6FF] transition-colors">
+              {client.name}
+            </p>
+            <p className="text-[11px] text-[#6B7280]">{client.email || "—"}</p>
+          </div>
+        </div>
+      </td>
+      <td className="py-3.5 px-5">
+        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border ${statusStyle(client.status)}`}>
+          {client.status ?? "Active"}
+        </span>
+      </td>
+      <td className="py-3.5 px-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-20 h-1.5 bg-[#1A1A24] rounded-full overflow-hidden">
+            <div
+              className={`h-full bg-gradient-to-r ${progressColor(progress)} rounded-full`}
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <span className="text-xs font-bold text-white tabular-nums w-8">{progress}%</span>
+        </div>
+      </td>
+      <td className="py-3.5 px-5 hidden md:table-cell">
+        <span className="text-sm text-[#6B7280]">{getTimeAgo(client.lastUpdateDate)}</span>
+      </td>
+      <td className="py-3.5 px-5 text-right">
+        <button
+          onClick={e => { e.stopPropagation(); router.push(`/dashboard/updates?client=${client.id}`); }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-[#A4A6FF] hover:text-white bg-[#5B5CF6]/10 hover:bg-[#5B5CF6] border border-[#5B5CF6]/25 hover:border-[#5B5CF6] rounded-lg transition-all"
+        >
+          <Send className="w-3 h-3" /> Update
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ClientsPage() {
   const router = useRouter();
   const { userData } = useAuth();
-  
+
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("All");
-
-  const [clients, setClients] = useState<any[]>([
-    { id: '1', name: 'Velvet Digital', status: 'Active', accessId: 'OS-A92', progress: 40, lastUpdateDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), lastUpdateText: 'Frontend completed and designs approved.' },
-    { id: '2', name: 'Nova Agency', status: 'Active', accessId: 'OS-X4F', progress: 70, lastUpdateDate: new Date().toISOString(), lastUpdateText: 'Working on backend API integration.' },
-    { id: '3', name: 'Echo Labs', status: 'Paused', accessId: 'OS-L9P', progress: 20, lastUpdateDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), lastUpdateText: 'Project kicked off, gathering requirements.' },
-    { id: '4', name: 'Stark Industries', status: 'Active', accessId: 'OS-S99', progress: 95, lastUpdateDate: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), lastUpdateText: 'Final QA and testing.' }
-  ]);
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [clients, setClients] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
-    if (!userData?.agencyId) return;
+    const orgId = userData?.organization_id;
+    if (!orgId) return;
     setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 600)); // Premium skeleton feel
-      // const fetchedClients = await getClients(userData.agencyId);
-      // setClients(fetchedClients); // Disabled temporarily to show dummy data
-    } catch (err) {
-      console.error("Error fetching clients:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    try { setClients(await getAllClients(orgId)); }
+    catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
   }, [userData]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const displayClients = clients
     .filter(c => {
       if (searchQuery && !c.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      const needsUpdate = c.status !== 'Paused' && isNeedsUpdate(c.lastUpdateDate);
       if (filter === "Active" && c.status !== "Active") return false;
-      if (filter === "Needs Update" && !needsUpdate) return false;
+      if (filter === "Needs Update" && !(c.status !== "Paused" && isNeedsUpdate(c.lastUpdateDate))) return false;
       return true;
     })
-    .sort((a, b) => {
-      return new Date(a.lastUpdateDate || 0).getTime() - new Date(b.lastUpdateDate || 0).getTime();
-    });
-
-  const needsAttentionClients = displayClients.filter(c => c.status !== 'Paused' && isNeedsUpdate(c.lastUpdateDate));
-  const activeClients = displayClients.filter(c => c.status === 'Active' && !isNeedsUpdate(c.lastUpdateDate));
-  const pausedClients = displayClients.filter(c => c.status === 'Paused');
+    .sort((a, b) => new Date(a.lastUpdateDate || 0).getTime() - new Date(b.lastUpdateDate || 0).getTime());
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
-      {/* Header */}
+    <div className="h-full overflow-y-auto p-8 max-w-7xl mx-auto space-y-6 animate-fade-in pb-20">
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white font-headline tracking-tight">Clients</h1>
-          <p className="text-[#9CA3AF] mt-1.5 text-[15px]">Manage all your clients from a bird's-eye view.</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            Clients
+          </h1>
+          <p className="text-sm text-[#6B7280] mt-1">
+            {isLoading ? "Loading…" : `${clients.length} client${clients.length !== 1 ? "s" : ""} · ${clients.filter(c => c.status === "Active").length} active`}
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => setIsAddClientOpen(true)}
-          className="px-5 py-2.5 bg-[#5B5CF6] hover:bg-[#4F50DB] border border-[#5B5CF6] hover:border-[#4F50DB] text-white text-sm font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(91,92,246,0.15)] hover:shadow-[0_0_25px_rgba(91,92,246,0.3)] flex items-center gap-2"
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white text-sm font-bold rounded-xl transition-all shadow-[0_4px_15px_rgba(91,92,246,0.2)] hover:shadow-[0_4px_25px_rgba(91,92,246,0.35)]"
         >
-          <Plus className="w-4 h-4" />
-          Add Client
+          <Sparkles className="w-4 h-4" /> Onboard Client
         </button>
       </div>
 
-      {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#131317] border border-[#1F1F2B] p-4 rounded-2xl shadow-sm">
-        <div className="relative w-full sm:w-96 group">
-          <Search className="w-4 h-4 text-[#6B7280] absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-[#5B5CF6] transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search by client name..." 
+      {/* ── Toolbar ────────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center">
+        {/* Search */}
+        <div className="relative w-full sm:w-72 group">
+          <Search className="w-4 h-4 text-[#4B5563] absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-[#5B5CF6] transition-colors pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search clients…"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#0D0D13] border border-[#2D2D3D] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#6B7280] focus:outline-none focus:border-[#5B5CF6]/50 focus:ring-1 focus:ring-[#5B5CF6]/50 transition-all shadow-inner"
+            className="w-full bg-[#131317] border border-[#1F1F2B] rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#4B5563] focus:outline-none focus:border-[#5B5CF6]/50 focus:ring-1 focus:ring-[#5B5CF6]/30 transition-all"
           />
         </div>
-        <div className="w-full sm:w-auto flex items-center gap-3">
-          <select 
-            value={filter} 
-            onChange={e => setFilter(e.target.value)} 
-            className="w-full sm:w-auto bg-[#0D0D13] border border-[#2D2D3D] text-[#E5E7EB] text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-[#5B5CF6]/50 focus:ring-1 focus:ring-[#5B5CF6]/50 cursor-pointer shadow-sm"
+
+        {/* Filter pills */}
+        <div className="flex items-center gap-2">
+          {["All", "Active", "Needs Update"].map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all border ${
+                filter === f
+                  ? "bg-[#5B5CF6]/15 border-[#5B5CF6]/35 text-[#A4A6FF]"
+                  : "bg-[#131317] border-[#1F1F2B] text-[#6B7280] hover:border-[#2D2D3D] hover:text-[#9CA3AF]"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* View toggle */}
+        <div className="ml-auto flex items-center bg-[#131317] border border-[#1F1F2B] rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setView("grid")}
+            className={`p-2 rounded-lg transition-all ${view === "grid" ? "bg-[#1F1F2B] text-white" : "text-[#4B5563] hover:text-[#9CA3AF]"}`}
           >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active Only</option>
-            <option value="Needs Update">Needs Update</option>
-          </select>
-          <div className="w-10 h-10 rounded-xl bg-[#1A1A24] border border-[#2D2D3D] flex items-center justify-center shrink-0">
-            <LayoutGrid className="w-4 h-4 text-[#A4A6FF]" />
-          </div>
+            <LayoutGrid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setView("list")}
+            className={`p-2 rounded-lg transition-all ${view === "list" ? "bg-[#1F1F2B] text-white" : "text-[#4B5563] hover:text-[#9CA3AF]"}`}
+          >
+            <List className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
-      {/* Grid Content */}
+      {/* ── Content ────────────────────────────────────────────────────────── */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {Array(6).fill(0).map((_, i) => (
-            <div key={i} className="bg-[#131317] border border-[#1F1F2B] rounded-2xl p-6 h-[260px] animate-pulse flex flex-col">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#2D2D3D]" />
-                  <div className="space-y-2">
-                    <div className="h-4 w-24 bg-[#2D2D3D] rounded" />
-                    <div className="h-3 w-16 bg-[#2D2D3D] rounded" />
+            <div key={i} className="bg-[#131317] border border-[#1F1F2B] rounded-2xl overflow-hidden animate-pulse">
+              <div className="h-[2px] bg-[#1F1F2B]" />
+              <div className="p-5 space-y-4">
+                <div className="flex gap-3 items-center">
+                  <div className="w-11 h-11 rounded-xl bg-[#1F1F2B]" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 w-28 bg-[#1F1F2B] rounded" />
+                    <div className="h-3 w-20 bg-[#1F1F2B] rounded" />
                   </div>
                 </div>
-                <div className="w-16 h-5 rounded-full bg-[#2D2D3D]" />
-              </div>
-              <div className="space-y-2 mt-4">
-                <div className="h-2 w-full bg-[#2D2D3D] rounded-full" />
-                <div className="h-2 w-2/3 bg-[#2D2D3D] rounded-full" />
-              </div>
-              <div className="mt-auto flex gap-3">
-                <div className="flex-1 h-10 bg-[#2D2D3D] rounded-xl" />
-                <div className="flex-1 h-10 bg-[#2D2D3D] rounded-xl" />
+                <div className="h-1.5 w-full bg-[#1F1F2B] rounded-full" />
+                <div className="h-16 bg-[#1F1F2B] rounded-xl" />
+                <div className="flex gap-2">
+                  <div className="flex-1 h-9 bg-[#1F1F2B] rounded-xl" />
+                  <div className="flex-1 h-9 bg-[#1F1F2B] rounded-xl" />
+                </div>
               </div>
             </div>
           ))}
         </div>
+
       ) : displayClients.length === 0 ? (
-        <div className="bg-[#131317] border border-[#1F1F2B] rounded-2xl p-16 flex flex-col items-center justify-center text-center shadow-sm">
-          <div className="w-16 h-16 bg-[#1A1A24] border border-[#2D2D3D] rounded-2xl flex items-center justify-center mb-6">
-            <LayoutGrid className="w-8 h-8 text-[#6B7280]" />
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#131317] border border-[#1F1F2B] flex items-center justify-center mb-5">
+            <Users className="w-8 h-8 text-[#2D2D3D]" />
           </div>
-          <h3 className="text-2xl font-bold text-white mb-2 font-headline">
-            {clients.length === 0 ? "No clients yet" : "No clients found"}
+          <h3 className="text-lg font-bold text-white mb-2">
+            {clients.length === 0 ? "No clients yet" : "No results found"}
           </h3>
-          <p className="text-[15px] text-[#9CA3AF] mb-8 max-w-sm">
-            {clients.length === 0 ? "Add your first client to start managing projects and sending updates." : "Try adjusting your search query or removing filters."}
+          <p className="text-sm text-[#6B7280] max-w-xs mb-8">
+            {clients.length === 0
+              ? "Onboard your first client to start managing projects and sending updates."
+              : "Try adjusting your search or filter."}
           </p>
           {clients.length === 0 && (
-            <button 
+            <button
               onClick={() => setIsAddClientOpen(true)}
-              className="px-6 py-3 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white text-[15px] font-bold rounded-xl transition-all shadow-[0_4px_15px_rgba(91,92,246,0.2)] hover:shadow-[0_4px_25px_rgba(91,92,246,0.4)] flex items-center gap-2"
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white font-bold rounded-xl transition-all"
             >
-              <Plus className="w-5 h-5" />
-              Add your first client
+              <Plus className="w-4 h-4" /> Add First Client
             </button>
           )}
         </div>
+
+      ) : view === "grid" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {displayClients.map(c => <ClientCard key={c.id} client={c} />)}
+        </div>
+
       ) : (
-        <div className="space-y-12">
-          {needsAttentionClients.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-[#EF4444]/10 border border-[#EF4444]/20 flex items-center justify-center">
-                  <span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>
-                </div>
-                <h2 className="text-lg font-bold text-white tracking-wide font-headline">Needs Attention</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {needsAttentionClients.map(client => <ClientCard key={client.id} client={client} />)}
-              </div>
-            </div>
-          )}
-
-          {activeClients.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-[#10B981]/10 border border-[#10B981]/20 flex items-center justify-center">
-                  <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-                </div>
-                <h2 className="text-lg font-bold text-white tracking-wide font-headline">Active Clients</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {activeClients.map(client => <ClientCard key={client.id} client={client} />)}
-              </div>
-            </div>
-          )}
-
-          {pausedClients.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-8 h-8 rounded-full bg-[#6B7280]/10 border border-[#6B7280]/20 flex items-center justify-center">
-                  <span className="w-2 h-2 rounded-full bg-[#6B7280]"></span>
-                </div>
-                <h2 className="text-lg font-bold text-white tracking-wide font-headline">Paused Clients</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {pausedClients.map(client => <ClientCard key={client.id} client={client} />)}
-              </div>
-            </div>
-          )}
+        <div className="bg-[#131317] border border-[#1F1F2B] rounded-2xl overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-[#0D0D13] border-b border-[#1F1F2B]">
+                <th className="py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Client</th>
+                <th className="py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Status</th>
+                <th className="py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Progress</th>
+                <th className="py-3 px-5 text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider hidden md:table-cell">Last Update</th>
+                <th className="py-3 px-5 text-right text-[11px] font-semibold text-[#6B7280] uppercase tracking-wider">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#1A1A24]">
+              {displayClients.map(c => <ClientRow key={c.id} client={c} />)}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Modals */}
       <AddClientModal isOpen={isAddClientOpen} onClose={() => setIsAddClientOpen(false)} onClientAdded={fetchData} />
     </div>
   );

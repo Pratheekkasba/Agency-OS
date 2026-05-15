@@ -200,7 +200,7 @@ export default function ClientPortal() {
             </div>
           </div>
 
-          {/* Support / Contact Footer Area (Read Only) */}
+          {/* Support / Contact Footer Area & Programmatic Backlink */}
           <footer className="mt-24 pt-12 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-lg bg-surface-container-highest flex items-center justify-center">
@@ -211,13 +211,33 @@ export default function ClientPortal() {
                 <p className="text-sm text-on-surface-variant">Reach out via your dedicated Slack channel.</p>
               </div>
             </div>
-            <div className="flex flex-col items-end">
-              <div className="flex -space-x-3 mb-2">
-                <img alt="Team member" className="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfdIiMjavXkAQtFV6p9aUbpzgS2L_hCaW95OTob6c2efWCtURsYUtbKCFuEJz_Diq_RCivF8Ux2X5-bdydQ0PL89kal04W4no0M0eoB8c42RVluh9kgyBjrVpjfA7-NBpFICZNkknVnUhb3O0vdN0_W-fuGG32jHpHRt4wPr05RlYGaihyIRnfCp1BfhApVQ1XLSbAgd86ZKzoMC7Mt1UubB0vXLyZQQ74UZ6MU213AOLRmtAhkfdyiM6o2ryGkKm-R-6TgVRlKZvi" />
-                <img alt="Team member" className="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmPYqVrDlZnsiJ4g9OKr0mjpOgef5z0rQxMpno-RIoqlAv6lALxGSsTjvCu6D1lU0Fb7V_RP5J8nWfofXs6jLtrKdh-c24EWmf0wU8zucZjJWGPBHKNG4Er0-SVJijFAI3-825V21ohq8y5gSY_j8lnWrnqt5S8LEzuhQZne2eIigCGDv8xpUCkQj3PFcONcPyumalCSEyKYQ_EQ6GoKhmhmPCpQAjpqCbik5_hsdc34_HSTFZRaevxTCDiZ4JJ4jxQi91nwRnkvmk" />
-                <div className="w-8 h-8 rounded-full border-2 border-background bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">+3</div>
+            
+            <div className="flex flex-col items-center md:items-end gap-6">
+              <div className="flex flex-col items-end">
+                <div className="flex -space-x-3 mb-2">
+                  <img alt="Team member" className="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfdIiMjavXkAQtFV6p9aUbpzgS2L_hCaW95OTob6c2efWCtURsYUtbKCFuEJz_Diq_RCivF8Ux2X5-bdydQ0PL89kal04W4no0M0eoB8c42RVluh9kgyBjrVpjfA7-NBpFICZNkknVnUhb3O0vdN0_W-fuGG32jHpHRt4wPr05RlYGaihyIRnfCp1BfhApVQ1XLSbAgd86ZKzoMC7Mt1UubB0vXLyZQQ74UZ6MU213AOLRmtAhkfdyiM6o2ryGkKm-R-6TgVRlKZvi" />
+                  <img alt="Team member" className="w-8 h-8 rounded-full border-2 border-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmPYqVrDlZnsiJ4g9OKr0mjpOgef5z0rQxMpno-RIoqlAv6lALxGSsTjvCu6D1lU0Fb7V_RP5J8nWfofXs6jLtrKdh-c24EWmf0wU8zucZjJWGPBHKNG4Er0-SVJijFAI3-825V21ohq8y5gSY_j8lnWrnqt5S8LEzuhQZne2eIigCGDv8xpUCkQj3PFcONcPyumalCSEyKYQ_EQ6GoKhmhmPCpQAjpqCbik5_hsdc34_HSTFZRaevxTCDiZ4JJ4jxQi91nwRnkvmk" />
+                  <div className="w-8 h-8 rounded-full border-2 border-background bg-surface-container-highest flex items-center justify-center text-[10px] font-bold">+3</div>
+                </div>
+                <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Your Agency Team</p>
               </div>
-              <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-medium">Your Agency OS Team</p>
+              
+              {/* Programmatic SEO Backlink - The Viral Loop */}
+              <div className="flex items-center justify-center md:justify-end w-full pt-4 md:pt-0 mt-4 md:mt-0 border-t md:border-t-0 border-outline-variant/10">
+                <Link 
+                  href="https://agency-os.tech/client-portal" 
+                  className="flex items-center gap-2 group transition-opacity opacity-70 hover:opacity-100"
+                  title="Client Portal Software for Modern Agencies"
+                  target="_blank"
+                  rel="dofollow"
+                >
+                  <span className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Powered by</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px] text-primary">token</span>
+                    <span className="font-headline font-bold text-xs tracking-tight text-on-surface">Agency OS</span>
+                  </div>
+                </Link>
+              </div>
             </div>
           </footer>
         </main>

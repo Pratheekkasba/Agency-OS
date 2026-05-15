@@ -41,8 +41,8 @@ export default function LoginPage() {
 
       if (userData?.role) {
         localStorage.setItem("agency-role", userData.role);
-        if (userData.agencyId) {
-          localStorage.setItem("agency-id", userData.agencyId);
+        if (userData.organization_id) {
+          localStorage.setItem("organization_id", userData.organization_id);
         }
         if (userData.role === "client") {
           router.push("/portal");
@@ -101,8 +101,8 @@ export default function LoginPage() {
       
       if (userData?.role) {
         localStorage.setItem("agency-role", userData.role);
-        if (userData.agencyId) {
-          localStorage.setItem("agency-id", userData.agencyId);
+        if (userData.organization_id) {
+          localStorage.setItem("organization_id", userData.organization_id);
         }
         if (userData.role === "client") {
           router.push("/portal");

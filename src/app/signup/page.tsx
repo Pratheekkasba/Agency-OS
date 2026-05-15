@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup, sendEmailVerification } from "firebase/auth";
 import { auth, db } from "@/lib/firebase/config";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import LoginForm from "@/components/ui/login-form";
@@ -35,6 +35,13 @@ export default function SignupPage() {
         email: email,
         createdAt: serverTimestamp(),
       });
+
+      // Trigger custom verification email
+      await fetch("/api/auth/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cred.user.email }),
+      }).catch(err => console.error("Failed to trigger verification email:", err));
 
       router.push("/role");
     } catch (err: any) {

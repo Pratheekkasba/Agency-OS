@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase/config";
-import { setUserRole } from "@/lib/firebase/firestore";
+import { setUserRole, getClientByAccessId } from "@/lib/firebase/firestore";
 import { ArrowLeft, ArrowRight, Building2, Users, KeyRound, Loader2, LayoutGrid } from "lucide-react";
 
 type Step = "choose" | "agency-code";
@@ -40,9 +40,23 @@ export default function RoleSelectionPage() {
 
     try {
       const uid = auth.currentUser.uid;
-      await setUserRole(uid, "agency", uid);
-      localStorage.setItem("agency-role", "agency");
-      localStorage.setItem("agency-id", uid);
+      // organization_id for an agency owner = their own UID (org is auto-created)
+      const organization_id = uid;
+      await setUserRole(uid, "owner", organization_id);
+
+      // Stamp organization_id into the Firebase Auth JWT via Admin SDK
+      // This is what makes Firestore Security Rules enforce org isolation
+      const idToken = await auth.currentUser.getIdToken();
+      await fetch("/api/auth/set-claims", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, organization_id, role: "owner" }),
+      });
+      // Force-refresh the token so the new claim is active immediately
+      await auth.currentUser.getIdToken(true);
+
+      localStorage.setItem("agency-role", "owner");
+      localStorage.setItem("agency-id", organization_id);
       router.push("/dashboard");
     } catch (err) {
       console.error("Error setting agency role:", err);
@@ -63,25 +77,47 @@ export default function RoleSelectionPage() {
     setSaving(true);
     setError(null);
 
-    // DUMMY LOGIC validation
-    const dummyClientAccessIds = ["OS-A92", "OS-X4F", "OS-L9P"];
-    if (!dummyClientAccessIds.includes(trimmedCode)) {
+    // Real Firestore validation
+    let clientData;
+    try {
+      clientData = await getClientByAccessId(trimmedCode);
+    } catch (err) {
+      console.error("Error fetching client by Access ID:", err);
+      setError("An error occurred verifying your access code.");
+      setSaving(false);
+      return;
+    }
+
+    if (!clientData) {
       setError("Invalid Access ID. Please check and try again.");
       setSaving(false);
       return;
     }
 
-    // Determine basic dummy data to save based on Access ID
-    const dummyClientName = trimmedCode === "OS-A92" ? "Velvet Digital" : trimmedCode === "OS-X4F" ? "Nova Agency" : "Echo Labs";
-    const dummyStatus = trimmedCode === "OS-L9P" ? "Paused" : "Active";
-    const dummyClientData = { id: trimmedCode, name: dummyClientName, status: dummyStatus, accessId: trimmedCode };
-
     try {
       const uid = auth.currentUser.uid;
-      await setUserRole(uid, "client", trimmedCode);
+      // organization_id for a client = the agency's organization_id (the org they belong to)
+      const organization_id = clientData.organization_id;
+      await setUserRole(uid, "client", organization_id);
+
+      // Stamp organization_id into the Firebase Auth JWT via Admin SDK
+      const idToken = await auth.currentUser.getIdToken();
+      await fetch("/api/auth/set-claims", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, organization_id, role: "client" }),
+      });
+      // Force-refresh so claim is immediately active
+      await auth.currentUser.getIdToken(true);
+
       localStorage.setItem("agency-role", "client");
-      localStorage.setItem("agency-access-id", trimmedCode);
-      localStorage.setItem("client-data", JSON.stringify(dummyClientData));
+      localStorage.setItem("agency-access-id", clientData.accessId || "");
+      localStorage.setItem("client-data", JSON.stringify({ 
+        id: clientData.id, 
+        name: clientData.name, 
+        status: clientData.status, 
+        accessId: clientData.accessId 
+      }));
       router.push("/client");
     } catch (err) {
       console.error("Error setting client role:", err);
@@ -104,20 +140,19 @@ export default function RoleSelectionPage() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#5B5CF6]/10 rounded-full blur-[150px] pointer-events-none" />
 
       {/* Main content — vertically + horizontally centered */}
-      <main className="flex-1 w-full flex flex-col items-center justify-center px-6 relative z-10">
-        <div className="w-full max-w-5xl mx-auto flex flex-col items-center justify-center">
-
+      <main className="flex-1 w-full flex items-center justify-center px-6 py-8 relative z-10">
+        <div className="w-full max-w-5xl mx-auto grid">
           {/* ─── STEP 1: Choose Role ─── */}
           <div
-            className={`transition-all duration-500 w-full flex flex-col items-center justify-center ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`col-start-1 row-start-1 transition-all duration-500 w-full flex flex-col items-center justify-center ease-[cubic-bezier(0.16,1,0.3,1)] ${
               step === "choose"
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 -translate-x-full absolute inset-0 pointer-events-none"
+                ? "opacity-100 translate-x-0 z-10"
+                : "opacity-0 -translate-x-full pointer-events-none"
             }`}
           >
             {/* Header */}
-            <div className="text-center mb-14 space-y-4">
-              <div className="flex items-center justify-center mb-8">
+            <div className="text-center mb-8 space-y-3">
+              <div className="flex items-center justify-center mb-4">
                 <div className="inline-flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#5B5CF6] to-[#8183FF] shadow-[0_4px_15px_rgba(91,92,246,0.3)] border border-[#4F50DB]">
                     <LayoutGrid className="w-5 h-5 text-white" />
@@ -131,18 +166,17 @@ export default function RoleSelectionPage() {
                 </div>
               </div>
               <h1
-                className="text-4xl md:text-5xl font-bold tracking-tight text-white mb-2"
+                className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2"
                 style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 Choose your workspace
               </h1>
-              <p className="text-[#9CA3AF] max-w-md mx-auto text-base leading-relaxed">
+              <p className="text-[#9CA3AF] max-w-md mx-auto text-sm leading-relaxed">
                 Select how you want to log in to get started with the right tools and experience.
               </p>
             </div>
-
             {/* Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl mx-auto">
               {/* Agency Card */}
               <button
                 disabled={saving}
@@ -150,26 +184,25 @@ export default function RoleSelectionPage() {
                 className={`group text-left w-full relative outline-none focus:ring-2 focus:ring-[#5B5CF6] rounded-2xl ${saving ? "opacity-50 pointer-events-none" : ""}`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#5B5CF6]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl" />
-                <div className="relative bg-[#131317] border border-[#2D2D3D] rounded-2xl p-8 transition-all duration-300 hover:border-[#5B5CF6]/50 hover:bg-[#1A1A24] flex flex-col h-full hover:-translate-y-1 shadow-lg hover:shadow-[0_8px_30px_rgba(91,92,246,0.15)] overflow-hidden">
+                <div className="relative bg-[#131317] border border-[#2D2D3D] rounded-2xl p-6 transition-all duration-300 hover:border-[#5B5CF6]/50 hover:bg-[#1A1A24] flex flex-col h-full hover:-translate-y-1 shadow-lg hover:shadow-[0_8px_30px_rgba(91,92,246,0.15)] overflow-hidden">
                   
                   {/* Decorative corner accent */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#5B5CF6]/10 to-transparent rounded-bl-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="mb-8 w-14 h-14 rounded-xl bg-[#5B5CF6]/10 border border-[#5B5CF6]/20 flex items-center justify-center group-hover:bg-[#5B5CF6] group-hover:border-[#5B5CF6] transition-all duration-300 shadow-inner">
+                  <div className="mb-5 w-12 h-12 rounded-xl bg-[#5B5CF6]/10 border border-[#5B5CF6]/20 flex items-center justify-center group-hover:bg-[#5B5CF6] group-hover:border-[#5B5CF6] transition-all duration-300 shadow-inner">
                     <Building2 className="w-6 h-6 text-[#5B5CF6] group-hover:text-white transition-colors" />
                   </div>
                   
                   <h2
-                    className="text-2xl font-bold mb-3 text-white group-hover:text-[#A4A6FF] transition-colors tracking-tight"
+                    className="text-xl font-bold mb-2 text-white group-hover:text-[#A4A6FF] transition-colors tracking-tight"
                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                   >
                     Agency / Organization
                   </h2>
-                  <p className="text-[#9CA3AF] text-sm leading-relaxed mb-8 flex-1 relative z-10">
+                  <p className="text-[#9CA3AF] text-sm leading-relaxed mb-5 flex-1 relative z-10">
                     Manage your clients, send project updates, and run your agency operations from one unified dashboard.
                   </p>
                   
-                  <div className="mt-auto flex items-center justify-between border-t border-[#1F1F2B] pt-5 group-hover:border-[#2D2D3D] transition-colors relative z-10">
+                  <div className="mt-auto flex items-center justify-between border-t border-[#1F1F2B] pt-4 group-hover:border-[#2D2D3D] transition-colors relative z-10">
                     <span className="text-sm font-bold text-[#6B7280] group-hover:text-white transition-colors">Select Workspace</span>
                     <div className="w-8 h-8 rounded-full bg-[#1A1A24] border border-[#2D2D3D] flex items-center justify-center group-hover:bg-[#5B5CF6] group-hover:border-[#5B5CF6] transition-all shadow-sm">
                       <ArrowRight className="w-4 h-4 text-[#6B7280] group-hover:text-white transition-colors" />
@@ -177,7 +210,6 @@ export default function RoleSelectionPage() {
                   </div>
                 </div>
               </button>
-
               {/* Client Card */}
               <button
                 disabled={saving}
@@ -185,26 +217,25 @@ export default function RoleSelectionPage() {
                 className={`group text-left w-full relative outline-none focus:ring-2 focus:ring-[#A4A6FF] rounded-2xl ${saving ? "opacity-50 pointer-events-none" : ""}`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-[#A4A6FF]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl" />
-                <div className="relative bg-[#131317] border border-[#2D2D3D] rounded-2xl p-8 transition-all duration-300 hover:border-[#A4A6FF]/50 hover:bg-[#1A1A24] flex flex-col h-full hover:-translate-y-1 shadow-lg hover:shadow-[0_8px_30px_rgba(164,166,255,0.15)] overflow-hidden">
+                <div className="relative bg-[#131317] border border-[#2D2D3D] rounded-2xl p-6 transition-all duration-300 hover:border-[#A4A6FF]/50 hover:bg-[#1A1A24] flex flex-col h-full hover:-translate-y-1 shadow-lg hover:shadow-[0_8px_30px_rgba(164,166,255,0.15)] overflow-hidden">
                   
                   {/* Decorative corner accent */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#A4A6FF]/10 to-transparent rounded-bl-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
-
-                  <div className="mb-8 w-14 h-14 rounded-xl bg-[#A4A6FF]/10 border border-[#A4A6FF]/20 flex items-center justify-center group-hover:bg-[#A4A6FF] group-hover:border-[#A4A6FF] transition-all duration-300 shadow-inner">
+                  <div className="mb-5 w-12 h-12 rounded-xl bg-[#A4A6FF]/10 border border-[#A4A6FF]/20 flex items-center justify-center group-hover:bg-[#A4A6FF] group-hover:border-[#A4A6FF] transition-all duration-300 shadow-inner">
                     <Users className="w-6 h-6 text-[#A4A6FF] group-hover:text-[#131317] transition-colors" />
                   </div>
                   
                   <h2
-                    className="text-2xl font-bold mb-3 text-white group-hover:text-[#A4A6FF] transition-colors tracking-tight"
+                    className="text-xl font-bold mb-2 text-white group-hover:text-[#A4A6FF] transition-colors tracking-tight"
                     style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                   >
                     Client Portal
                   </h2>
-                  <p className="text-[#9CA3AF] text-sm leading-relaxed mb-8 flex-1 relative z-10">
+                  <p className="text-[#9CA3AF] text-sm leading-relaxed mb-5 flex-1 relative z-10">
                     Track your project progress, view updates from your agency, and approve deliverables — all in one place.
                   </p>
                   
-                  <div className="mt-auto flex items-center justify-between border-t border-[#1F1F2B] pt-5 group-hover:border-[#2D2D3D] transition-colors relative z-10">
+                  <div className="mt-auto flex items-center justify-between border-t border-[#1F1F2B] pt-4 group-hover:border-[#2D2D3D] transition-colors relative z-10">
                     <span className="text-sm font-bold text-[#6B7280] group-hover:text-white transition-colors">Select Workspace</span>
                     <div className="w-8 h-8 rounded-full bg-[#1A1A24] border border-[#2D2D3D] flex items-center justify-center group-hover:bg-[#A4A6FF] group-hover:border-[#A4A6FF] transition-all shadow-sm">
                       <ArrowRight className="w-4 h-4 text-[#6B7280] group-hover:text-[#131317] transition-colors" />
@@ -214,16 +245,15 @@ export default function RoleSelectionPage() {
               </button>
             </div>
           </div>
-
           {/* ─── STEP 2: Enter Agency Code ─── */}
           <div
-            className={`transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            className={`col-start-1 row-start-1 flex flex-col items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
               step === "agency-code"
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 translate-x-full absolute inset-0 pointer-events-none"
+                ? "opacity-100 translate-x-0 z-10"
+                : "opacity-0 translate-x-full pointer-events-none"
             }`}
           >
-            <div className="max-w-md mx-auto">
+            <div className="max-w-md w-full mx-auto">
               {/* Back button */}
               <button
                 onClick={() => { setStep("choose"); setError(null); }}

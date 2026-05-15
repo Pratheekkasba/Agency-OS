@@ -14,19 +14,19 @@ export function RoleSelectionModal() {
   // Still loading auth details, or user already has a role
   if (loading || (userData && userData.role)) return null;
 
-  const selectRole = async (role: "agency" | "client") => {
+  const selectRole = async (roleType: "agency" | "client") => {
     if (!auth.currentUser) return;
     setSaving(true);
 
     try {
       const uid = auth.currentUser.uid;
-      const agencyId = role === "agency" ? uid : null;
-
-      await setUserRole(uid, role, agencyId);
+      const organization_id = roleType === "agency" ? uid : null;
+      const role = roleType === "agency" ? "owner" : "client";
+      await setUserRole(uid, role, organization_id);
 
       // localStorage backup for UI speed
       localStorage.setItem("agency-role", role);
-      if (role === "agency") localStorage.setItem("agency-id", uid);
+      if (role === "owner") localStorage.setItem("agency-id", uid);
 
       if (role === "client") {
         router.push("/portal");

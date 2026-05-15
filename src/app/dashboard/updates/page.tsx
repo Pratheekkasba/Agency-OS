@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { getClients } from "@/lib/firebase/firestore";
-import { Sparkles, ChevronDown, Check, Copy, Pencil } from "lucide-react";
+import { getAllClients, getTasksByClient } from "@/lib/firebase/firestore";
+import { Sparkles, ChevronDown, Check, Copy, Pencil, RefreshCw } from "lucide-react";
 import type { Client } from "@/types";
 import { toast } from "sonner";
 
@@ -20,17 +20,26 @@ export default function UpdatesPage() {
   const [inProgressText, setInProgressText] = useState("");
   const [nextText, setNextText] = useState("");
 
+  type Tone = "professional" | "friendly" | "casual";
+  const [selectedTone, setSelectedTone] = useState<Tone>("professional");
+  const tones: { id: Tone; label: string; icon: string }[] = [
+    { id: "professional", label: "Professional", icon: "💼" },
+    { id: "friendly", label: "Friendly", icon: "👋" },
+    { id: "casual", label: "Casual", icon: "☕" },
+  ];
+
   // UI States
   const [generating, setGenerating] = useState(false);
+  const [isPulling, setIsPulling] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Fetch clients
   useEffect(() => {
     const fetch = async () => {
-      if (!userData?.agencyId) return;
+      if (!userData?.organization_id) return;
       try {
-        const fetched = await getClients(userData.agencyId);
+        const fetched = await getAllClients(userData.organization_id);
         setClients(fetched);
       } catch (err) {
         console.error("Error fetching clients:", err);
@@ -68,19 +77,60 @@ export default function UpdatesPage() {
   const getLivePreview = () => {
     if (!hasContent) return "";
     
-    let msg = `Hi ${selectedClient?.name || "Client"} team,\n\nHere's your weekly update:\n`;
+    const clientName = selectedClient?.name || "Client";
+    let msg = "";
+
+    // 1. Greeting
+    if (selectedTone === "professional") {
+      msg = `Hello ${clientName} team,\n\nPlease find your weekly project status update below:\n`;
+    } else if (selectedTone === "friendly") {
+      msg = `Hi ${clientName} team! 👋\n\nHere is what we've been up to this week:\n`;
+    } else {
+      msg = `Hey ${clientName} team,\n\nQuick project update for you:\n`;
+    }
+
     const doneLines = parseLines(doneText);
     if (doneLines.length > 0) {
-      msg += `\n✅ Completed:\n` + doneLines.map((l) => `* ${l}`).join("\n");
+      if (selectedTone === "professional") {
+        msg += `\n[ COMPLETED ]\n` + doneLines.map((l) => `• ${l}`).join("\n");
+      } else if (selectedTone === "friendly") {
+        msg += `\n✅ Completed:\n` + doneLines.map((l) => `* ${l}`).join("\n");
+      } else {
+        msg += `\nDone:\n` + doneLines.map((l) => `- ${l}`).join("\n");
+      }
     }
+
     const progLines = parseLines(inProgressText);
     if (progLines.length > 0) {
-      msg += `\n\n⏳ In Progress:\n` + progLines.map((l) => `* ${l}`).join("\n");
+      if (selectedTone === "professional") {
+        msg += `\n\n[ IN PROGRESS ]\n` + progLines.map((l) => `• ${l}`).join("\n");
+      } else if (selectedTone === "friendly") {
+        msg += `\n\n⏳ In Progress:\n` + progLines.map((l) => `* ${l}`).join("\n");
+      } else {
+        msg += `\n\nWorking on:\n` + progLines.map((l) => `- ${l}`).join("\n");
+      }
     }
+
     const nextLines = parseLines(nextText);
     if (nextLines.length > 0) {
-      msg += `\n\n🔜 Next:\n` + nextLines.map((l) => `* ${l}`).join("\n");
+      if (selectedTone === "professional") {
+        msg += `\n\n[ NEXT STEPS ]\n` + nextLines.map((l) => `• ${l}`).join("\n");
+      } else if (selectedTone === "friendly") {
+        msg += `\n\n🔜 Up Next:\n` + nextLines.map((l) => `* ${l}`).join("\n");
+      } else {
+        msg += `\n\nNext:\n` + nextLines.map((l) => `- ${l}`).join("\n");
+      }
     }
+
+    // Sign off
+    if (selectedTone === "professional") {
+      msg += `\n\nBest regards,\n${userData?.name || "The Agency OS Team"}`;
+    } else if (selectedTone === "friendly") {
+      msg += `\n\nHave a great weekend!\nCheers,\n${userData?.name || "The Agency OS Team"} ✨`;
+    } else {
+      msg += `\n\nLet me know if you have any questions.\nCheers, ${userData?.name || "The Team"}`;
+    }
+
     return msg;
   };
 
@@ -93,6 +143,34 @@ export default function UpdatesPage() {
     setTimeout(() => {
       setGenerating(false);
     }, 1500);
+  };
+
+  const handlePullFromTasks = async () => {
+    if (!selectedClient || !userData?.organization_id) return;
+    setIsPulling(true);
+    
+    try {
+      let clientTasks = await getTasksByClient(userData.organization_id, selectedClient.id);
+      
+      // We will group the tasks into status categories
+      const done = clientTasks.filter(t => t.status === "done").map(t => t.title).join("\n");
+      const inProg = clientTasks.filter(t => t.status === "inprogress" || t.status === "review").map(t => t.title).join("\n");
+      const next = clientTasks.filter(t => t.status === "todo").map(t => t.title).join("\n");
+
+      if (!done && !inProg && !next) {
+        toast("No active project tasks found for this client.", { icon: "ℹ️" });
+      } else {
+        setDoneText(done);
+        setInProgressText(inProg);
+        setNextText(next);
+        toast.success(`Pulled ${clientTasks.length} tasks successfully`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to sync project tasks");
+    } finally {
+      setIsPulling(false);
+    }
   };
 
   const handleClear = () => {
@@ -120,7 +198,7 @@ export default function UpdatesPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 relative animate-fade-in">
+    <div className="h-full overflow-y-auto p-8 max-w-7xl mx-auto space-y-8 relative animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -191,6 +269,41 @@ export default function UpdatesPage() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Action: Pull from tasks */}
+              {selectedClientId && (
+                <div className="flex justify-end -mt-2">
+                  <button
+                    onClick={handlePullFromTasks}
+                    disabled={isPulling}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#5B5CF6] hover:text-[#4F50DB] bg-[#5B5CF6]/10 hover:bg-[#5B5CF6]/20 px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isPulling ? 'animate-spin' : ''}`} />
+                    {isPulling ? 'Syncing...' : 'Sync with Project Tasks'}
+                  </button>
+                </div>
+              )}
+
+              {/* Tone Selector */}
+              <div>
+                <label className="block text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2.5">Update Tone</label>
+                <div className="flex bg-[#0D0D13] border border-[#1F1F2B] rounded-xl p-1 shadow-sm">
+                  {tones.map((tone) => (
+                    <button
+                      key={tone.id}
+                      onClick={() => setSelectedTone(tone.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 text-[13px] font-bold rounded-lg transition-all ${
+                        selectedTone === tone.id
+                          ? "bg-[#5B5CF6] text-white shadow-md border border-[#5B5CF6]"
+                          : "text-[#9CA3AF] border border-transparent hover:text-white hover:bg-[#1A1A24]"
+                      }`}
+                    >
+                      <span className="opacity-90">{tone.icon}</span>
+                      {tone.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 

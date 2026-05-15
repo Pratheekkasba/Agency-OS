@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "agency-os-7aa7c"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

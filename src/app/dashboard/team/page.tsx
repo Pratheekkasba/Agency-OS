@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -10,7 +10,9 @@ import {
 import { toast } from "sonner";
 import type { TeamMember, TeamRole } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { getTeamMembers } from "@/lib/firebase/firestore";
+import { subscribeToTeamMembers } from "@/lib/firebase/firestore";
+
+import { auth } from "@/lib/firebase/config";
 
 // --- Config ---
 const ROLE_CONFIG: Record<TeamRole, { label: string; icon: any; color: string; bg: string }> = {
@@ -50,6 +52,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<TeamRole>("member");
   const [copied, setCopied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const inviteLink = "https://agencyos.app/invite/OS-TEAM-X9F2K";
 
   const copyLink = () => {
@@ -57,6 +60,42 @@ function InviteModal({ onClose }: { onClose: () => void }) {
     setCopied(true);
     toast.success("Invite link copied!");
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleInvite = async () => {
+    if (!email.trim()) {
+      toast.error("Enter an email address");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      if (!idToken) throw new Error("Not authenticated");
+
+      const res = await fetch("/api/auth/invite-team-member", {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ email: email.trim(), role }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send invite");
+      }
+      
+      toast.success(`Invite sent to ${email}`);
+      onClose();
+    } catch (err: any) {
+      console.error("Invite error:", err);
+      toast.error(err.message || "Failed to send invite");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -84,6 +123,7 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="teammate@example.com"
                   className="w-full pl-9 pr-4 py-2.5 bg-[#131317] border border-[#1F1F2B] focus:border-[#5B5CF6]/50 rounded-xl text-sm text-white placeholder-[#6B7280] outline-none transition-all"
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -100,11 +140,12 @@ function InviteModal({ onClose }: { onClose: () => void }) {
                   <button
                     key={r}
                     onClick={() => setRole(r)}
+                    disabled={isSubmitting}
                     className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
                       role === r
                         ? `${conf.bg} ${conf.color} border-current/30`
                         : "bg-[#131317] border-[#1F1F2B] text-[#6B7280] hover:border-[#2D2D3D] hover:text-white"
-                    }`}
+                    } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     {conf.label}
@@ -117,28 +158,29 @@ function InviteModal({ onClose }: { onClose: () => void }) {
           {/* Or share link */}
           <div>
             <label className="block text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider mb-2">Or Share Invite Link</label>
-            <div className="flex items-center gap-2 px-3 py-2.5 bg-[#131317] border border-[#1F1F2B] rounded-xl">
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-[#131317] border border-[#1F1F2B] rounded-xl opacity-50 cursor-not-allowed">
               <Link2 className="w-4 h-4 text-[#6B7280] shrink-0" />
-              <span className="flex-1 text-xs text-[#6B7280] font-mono truncate">{inviteLink}</span>
-              <button onClick={copyLink} className="p-1 rounded text-[#6B7280] hover:text-white transition-colors">
-                {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+              <span className="flex-1 text-xs text-[#6B7280] font-mono truncate">Links coming soon</span>
+              <button disabled className="p-1 rounded text-[#6B7280]">
+                 <Copy className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
 
         <div className="px-6 py-4 border-t border-[#1F1F2B] flex items-center justify-end gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-semibold text-[#9CA3AF] hover:text-white transition-colors">Cancel</button>
+          <button onClick={onClose} disabled={isSubmitting} className="px-4 py-2 text-sm font-semibold text-[#9CA3AF] hover:text-white transition-colors disabled:opacity-50">Cancel</button>
           <button
-            onClick={() => {
-              if (!email.trim()) { toast.error("Enter an email address"); return; }
-              toast.success(`Invite sent to ${email}`);
-              onClose();
-            }}
-            className="px-5 py-2 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white text-sm font-bold rounded-xl transition-all"
+            onClick={handleInvite}
+            disabled={isSubmitting}
+            className="px-5 py-2 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50 flex items-center"
           >
-            <Mail className="w-4 h-4 inline mr-2" />
-            Send Invite
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Mail className="w-4 h-4 mr-2" />
+            )}
+            {isSubmitting ? "Sending..." : "Send Invite"}
           </button>
         </div>
       </div>
@@ -159,19 +201,18 @@ export default function TeamPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadMembers() {
-      if (!orgId) return;
-      setIsLoading(true);
-      try {
-        const team = await getTeamMembers(orgId);
-        setMembers(team);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadMembers();
+    if (!orgId) return;
+    setIsLoading(true);
+    
+    const unsubscribe = subscribeToTeamMembers(orgId, (fetchedMembers) => {
+      setMembers(fetchedMembers);
+      setIsLoading(false);
+    }, (err) => {
+      console.error("Team subscription error:", err);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [orgId]);
 
   const filtered = members.filter(m =>

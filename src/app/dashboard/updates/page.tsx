@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { addUpdate, getAllClients, getTasksByClient } from "@/lib/firebase/firestore";
+import { addUpdate, subscribeToClients, getTasksByClient } from "@/lib/firebase/firestore";
 import { notifyClientUpdateEmail } from "@/lib/email/notify";
 import { Sparkles, ChevronDown, Check, Copy, Pencil, RefreshCw } from "lucide-react";
 import type { Client } from "@/types";
@@ -35,19 +35,19 @@ export default function UpdatesPage() {
   const [isSending, setIsSending] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Fetch clients
+  // Fetch clients (Real-time)
   useEffect(() => {
-    const fetch = async () => {
-      if (!userData?.organization_id) return;
-      try {
-        const fetched = await getAllClients(userData.organization_id);
-        setClients(fetched);
-      } catch (err) {
-        console.error("Error fetching clients:", err);
-      }
-    };
-    fetch();
-  }, [userData]);
+    const orgId = userData?.organization_id;
+    if (!orgId) return;
+
+    const unsub = subscribeToClients(orgId, (fetched) => {
+      setClients(fetched);
+    }, (err) => {
+      console.error("Error subscribing to clients:", err);
+    });
+    
+    return () => unsub();
+  }, [userData?.organization_id]);
 
   // Pre-select client from URL params
   useEffect(() => {

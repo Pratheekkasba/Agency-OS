@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { AddClientModal } from "@/components/dashboard/add-client-modal";
 import { useAuth } from "@/context/AuthContext";
-import { getAllClients, resolveOrganizationId } from "@/lib/firebase/firestore";
+import { subscribeToClients, resolveOrganizationId } from "@/lib/firebase/firestore";
 import { toast } from "sonner";
 
 // --- helpers ---
@@ -250,20 +250,26 @@ export default function ClientsPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [clients, setClients] = useState<any[]>([]);
 
-  const fetchData = useCallback(async () => {
+  useEffect(() => {
     const orgId = resolveOrganizationId(userData);
     if (!orgId) return;
-    setIsLoading(true);
-    try {
-      setClients(await getAllClients(orgId));
-    } catch (err) {
-      console.error("Failed to load clients:", err);
-      toast.error("Failed to load clients. Check console for details.");
-    }
-    finally { setIsLoading(false); }
-  }, [userData]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+    setIsLoading(true);
+    const unsubscribe = subscribeToClients(
+      orgId,
+      (updatedClients) => {
+        setClients(updatedClients);
+        setIsLoading(false);
+      },
+      (err) => {
+        console.error("Failed to sync clients:", err);
+        toast.error("Real-time sync failed.");
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [userData]);
 
   const displayClients = clients
     .filter(c => {
@@ -415,7 +421,7 @@ export default function ClientsPage() {
         </div>
       )}
 
-      <AddClientModal isOpen={isAddClientOpen} onClose={() => setIsAddClientOpen(false)} onClientAdded={fetchData} />
+      <AddClientModal isOpen={isAddClientOpen} onClose={() => setIsAddClientOpen(false)} />
     </div>
   );
 }

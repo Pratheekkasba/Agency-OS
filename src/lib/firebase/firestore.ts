@@ -239,6 +239,29 @@ export async function getAllClients(organization_id: string): Promise<Client[]> 
   return clients;
 }
 
+/** Real-time subscription to clients for an organization. */
+export function subscribeToClients(
+  organization_id: string,
+  callback: (clients: Client[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "clients"),
+    where("organization_id", "==", organization_id)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const clients = sortByNewest(mapActiveDocs<Client>(snap.docs));
+      callback(clients);
+    },
+    (error) => {
+      console.error("[Firestore] Error subscribing to clients:", error);
+      if (onError) onError(error);
+    }
+  );
+}
+
 export async function updateClient(clientId: string, data: Partial<Client>) {
   const ref = doc(db, "clients", clientId);
   await updateDoc(ref, stripUndefined({ ...data, updatedAt: serverTimestamp() }));
@@ -310,6 +333,29 @@ export async function getProjects(
 export async function getAllProjects(organization_id: string): Promise<Project[]> {
   const { projects } = await getProjects(organization_id, 500);
   return projects;
+}
+
+/** Real-time subscription to projects for an organization. */
+export function subscribeToProjects(
+  organization_id: string,
+  callback: (projects: Project[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "projects"),
+    where("organization_id", "==", organization_id)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const projects = sortByNewest(mapActiveDocs<Project>(snap.docs));
+      callback(projects);
+    },
+    (error) => {
+      console.error("[Firestore] Error subscribing to projects:", error);
+      if (onError) onError(error);
+    }
+  );
 }
 
 export async function getProjectsByClient(
@@ -390,6 +436,29 @@ export async function getAllTasks(organization_id: string): Promise<Task[]> {
   return tasks;
 }
 
+/** Real-time subscription to tasks for an organization. */
+export function subscribeToTasks(
+  organization_id: string,
+  callback: (tasks: Task[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "tasks"),
+    where("organization_id", "==", organization_id)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const tasks = sortByNewest(mapActiveDocs<Task>(snap.docs));
+      callback(tasks);
+    },
+    (error) => {
+      console.error("[Firestore] Error subscribing to tasks:", error);
+      if (onError) onError(error);
+    }
+  );
+}
+
 export async function getTasksByProject(
   organization_id: string,
   projectId: string
@@ -442,6 +511,29 @@ export async function getTeamMembers(organization_id: string): Promise<TeamMembe
   );
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as TeamMember));
+}
+
+/** Real-time subscription to team members (users in the same organization). */
+export function subscribeToTeamMembers(
+  organization_id: string,
+  callback: (members: TeamMember[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "users"),
+    where("organization_id", "==", organization_id)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const members = snap.docs.map((d) => ({ id: d.id, ...d.data() } as TeamMember));
+      callback(members);
+    },
+    (error) => {
+      console.error("[Firestore] Error subscribing to team members:", error);
+      if (onError) onError(error);
+    }
+  );
 }
 
 export async function updateTeamMember(userId: string, data: Partial<TeamMember>) {
@@ -604,20 +696,20 @@ export function subscribeToConversations(
 
 /** Real-time subscription to messages inside a single chat thread (ordered oldest-first). */
 export function subscribeToChatMessages(
+  organization_id: string,
   chatId: string,
   callback: (messages: ChatMessage[]) => void,
   onError?: (error: Error) => void
 ): () => void {
   const q = query(
     collection(db, "chats", chatId, "messages"),
+    where("organization_id", "==", organization_id),
     orderBy("sentAt", "asc")
   );
   return onSnapshot(
     q,
     (snap) => {
-      const messages = snap.docs.map(
-        (d) => ({ id: d.id, ...d.data() }) as ChatMessage
-      );
+      const messages = mapActiveDocs<ChatMessage>(snap.docs as QueryDocumentSnapshot[]);
       callback(messages);
     },
     (error) => {
@@ -663,4 +755,29 @@ export async function sendChatMessage(
 export async function markChatReadByAgency(chatId: string): Promise<void> {
   const chatRef = doc(db, "chats", chatId);
   await updateDoc(chatRef, { unreadAgency: 0 });
+}
+
+/**
+ * Real-time subscription to external/webhook messages (Triage Board).
+ */
+export function subscribeToMessages(
+  organization_id: string,
+  callback: (messages: Message[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "messages"),
+    where("organization_id", "==", organization_id)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const messages = mapActiveDocs<Message>(snap.docs);
+      callback(sortByNewest(messages));
+    },
+    (error) => {
+      console.error("[Firestore] Error subscribing to triage messages:", error);
+      if (onError) onError(error);
+    }
+  );
 }

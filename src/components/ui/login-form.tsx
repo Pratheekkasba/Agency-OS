@@ -24,6 +24,7 @@ export interface LoginFormProps {
   onGoogleSignIn?: () => void;
   isLoading?: boolean;
   error?: string | null;
+  footerContent?: React.ReactNode;
 }
 
 export default function LoginForm({
@@ -44,6 +45,7 @@ export default function LoginForm({
   onGoogleSignIn,
   isLoading = false,
   error = null,
+  footerContent,
 }: LoginFormProps) {
   return (
     <div className="flex min-h-screen w-full bg-[#0B0B0F]">
@@ -184,12 +186,14 @@ export default function LoginForm({
             {isLoading ? "Please wait..." : buttonText}
           </button>
           
-          <p className="mt-6 text-sm text-[#9CA3AF]">
-            {signupText}{" "}
-            <a className="text-[#8B5CF6] hover:text-[#5B5CF6] transition-colors font-medium hover:underline" href={signupUrl}>
-              {signupLinkText}
-            </a>
-          </p>
+          {footerContent ? footerContent : (
+            <p className="mt-6 text-sm text-[#9CA3AF]">
+              {signupText}{" "}
+              <a className="text-[#8B5CF6] hover:text-[#5B5CF6] transition-colors font-medium hover:underline" href={signupUrl}>
+                {signupLinkText}
+              </a>
+            </p>
+          )}
         </form>
       </div>
     </div>

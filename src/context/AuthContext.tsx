@@ -20,6 +20,7 @@ interface AuthContextType {
     /** Bumped after refreshUser() so consumers re-read user.emailVerified */
     userRefreshKey: number;
     refreshUser: () => Promise<boolean>;
+    refreshSession: () => Promise<void>;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
 }
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType>({
     loading: true,
     userRefreshKey: 0,
     refreshUser: async () => false,
+    refreshSession: async () => { },
     signInWithGoogle: async () => { },
     signOut: async () => { },
 });
@@ -47,6 +49,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(auth.currentUser);
         setUserRefreshKey((k) => k + 1);
         return auth.currentUser?.emailVerified ?? false;
+    }, []);
+
+    const refreshSession = useCallback(async () => {
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        // Force refresh the ID token to pick up new Custom Claims (org_id, role)
+        await currentUser.getIdToken(true);
+        // Reload user object to sync properties
+        await currentUser.reload();
+        setUser(auth.currentUser);
+        setUserRefreshKey((k) => k + 1);
     }, []);
 
     useEffect(() => {
@@ -92,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, userData, loading, userRefreshKey, refreshUser, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ user, userData, loading, userRefreshKey, refreshUser, refreshSession, signInWithGoogle, signOut }}>
             {children}
         </AuthContext.Provider>
     );

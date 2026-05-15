@@ -23,6 +23,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { cn } from "@/lib/utils";
+import { subscribeToConversations, subscribeToMessages } from "@/lib/firebase/firestore";
 
 type NavItem = {
   href: string;
@@ -39,11 +40,11 @@ const NAV_MAIN: NavItem[] = [
 const NAV_WORK: NavItem[] = [
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/projects", label: "Projects", icon: Folder },
-  { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare, badge: 2, badgeColor: "bg-[#EF4444]" },
+  { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
 ];
 
 const NAV_INBOX: NavItem[] = [
-  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare, badge: 3, badgeColor: "bg-[#5B5CF6]" },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/updates", label: "Updates", icon: Bell },
 ];
 
@@ -146,6 +147,8 @@ export function DashboardSidebar() {
   const { collapsed, toggle } = useSidebar();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [agencyName, setAgencyName] = useState("My Agency");
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [unreadTriageCount, setUnreadTriageCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
@@ -202,6 +205,29 @@ export function DashboardSidebar() {
       cancelled = true;
     };
   }, [userData?.agencyName, userData?.organization_id, user?.displayName]);
+
+  // Real-time unread counts
+  useEffect(() => {
+    const orgId = userData?.organization_id;
+    if (!orgId) return;
+
+    // 1. Subscribe to chats for unreadAgency sum
+    const unsubChats = subscribeToConversations(orgId, (convs) => {
+      const sum = convs.reduce((acc, c) => acc + (c.unreadAgency || 0), 0);
+      setUnreadChatCount(sum);
+    });
+
+    // 2. Subscribe to messages for pending count (triage)
+    const unsubTriage = subscribeToMessages(orgId, (msgs) => {
+      const pending = msgs.filter((m) => m.status === "pending").length;
+      setUnreadTriageCount(pending);
+    });
+
+    return () => {
+      unsubChats();
+      unsubTriage();
+    };
+  }, [userData?.organization_id]);
 
   const displayName = user?.displayName || userData?.name || "Account";
   const initials = displayName
@@ -274,14 +300,24 @@ export function DashboardSidebar() {
         <Divider />
         <SectionLabel label="Inbox" collapsed={collapsed} />
         <div className="space-y-1">
-          {NAV_INBOX.map((item) => (
-            <SidebarItem
-              key={item.href}
-              item={item}
-              isActive={pathname.startsWith(item.href)}
-              collapsed={collapsed}
-            />
-          ))}
+          {NAV_INBOX.map((item) => {
+            let badge = item.badge;
+            if (item.label === "Messages") {
+              badge = unreadChatCount + unreadTriageCount;
+            }
+            return (
+              <SidebarItem
+                key={item.href}
+                item={{ 
+                  ...item, 
+                  badge,
+                  badgeColor: item.label === "Messages" ? "bg-[#5B5CF6]" : item.badgeColor 
+                }}
+                isActive={pathname.startsWith(item.href)}
+                collapsed={collapsed}
+              />
+            );
+          })}
         </div>
 
         <Divider />

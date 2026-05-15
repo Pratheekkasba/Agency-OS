@@ -35,8 +35,18 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, write: if request.auth != null
+      allow read: if request.auth != null 
+        && (request.auth.uid == userId || belongsToOrg(resource.data.organization_id));
+      allow write: if request.auth != null
         && request.auth.uid == userId;
+    }
+
+    match /team_invitations/{inviteId} {
+      allow read: if belongsToOrg(resource.data.organization_id);
+      allow write: if belongsToOrg(resource.data.organization_id) 
+        && (request.auth.token.role == 'owner' || request.auth.token.role == 'admin');
+      allow create: if belongsToOrg(request.resource.data.organization_id)
+        && (request.auth.token.role == 'owner' || request.auth.token.role == 'admin');
     }
 
     match /organizations/{orgId} {

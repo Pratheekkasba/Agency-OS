@@ -3,7 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getAllProjects, getAllClients, addProject, resolveOrganizationId } from "@/lib/firebase/firestore";
+import {
+  getAllProjects,
+  getAllClients,
+  addProject,
+  resolveOrganizationId,
+  subscribeToProjects,
+  subscribeToClients
+} from "@/lib/firebase/firestore";
 import type { Project, Client } from "@/types";
 import {
   Plus, Folder, Search, LayoutGrid, List,
@@ -77,24 +84,32 @@ export default function ProjectsPage() {
   const [formMilestones, setFormMilestones] = useState<string[]>(DEFAULT_MILESTONES);
   const [isSaving, setIsSaving] = useState(false);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
     if (!orgId) return;
-    setIsLoading(true);
-    try {
-      const [fetchedProjects, fetchedClients] = await Promise.all([
-        getAllProjects(orgId),
-        getAllClients(orgId),
-      ]);
-      setProjects(fetchedProjects);
-      setClients(fetchedClients);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [orgId]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+    setIsLoading(true);
+    
+    // Subscribe to Projects
+    const unsubProjects = subscribeToProjects(orgId, (fetchedProjects) => {
+      setProjects(fetchedProjects);
+      setIsLoading(false);
+    }, (err) => {
+      console.error("Projects subscription error:", err);
+      setIsLoading(false);
+    });
+
+    // Subscribe to Clients (needed for project creation modal)
+    const unsubClients = subscribeToClients(orgId, (fetchedClients) => {
+      setClients(fetchedClients);
+    }, (err) => {
+      console.error("Clients subscription error:", err);
+    });
+
+    return () => {
+      unsubProjects();
+      unsubClients();
+    };
+  }, [orgId]);
 
   const filtered = projects
     .filter(p => statusFilter === "all" || p.status === statusFilter)
@@ -129,7 +144,6 @@ export default function ProjectsPage() {
       toast.success("Project created!");
       setShowModal(false);
       resetForm();
-      loadData();
     } catch (err) {
       toast.error("Failed to create project.");
     } finally {

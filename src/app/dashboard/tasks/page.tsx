@@ -25,8 +25,13 @@ import {
   addTask,
   updateTask,
   deleteTask,
-  getAllClients, getAllProjects, resolveOrganizationId,
-  updateDenormalizedClientName
+  getAllClients,
+  getAllProjects,
+  resolveOrganizationId,
+  updateDenormalizedClientName,
+  subscribeToTasks,
+  subscribeToClients,
+  subscribeToProjects
 } from "@/lib/firebase/firestore";
 import type { Task, TaskStatus, TaskPriority, Client, Project } from "@/types";
 
@@ -579,28 +584,40 @@ export default function TasksPage() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // --- Fetch all data ---
-  const loadData = useCallback(async () => {
+  useEffect(() => {
     if (!orgId) return;
-    setIsLoading(true);
-    try {
-      const [fetchedTasks, fetchedClients, fetchedProjects] = await Promise.all([
-        getAllTasks(orgId),
-        getAllClients(orgId),
-        getAllProjects(orgId),
-      ]);
-      setTasks(fetchedTasks);
-      setClients(fetchedClients);
-      setProjects(fetchedProjects);
-    } catch (err) {
-      console.error("Error loading tasks:", err);
-      toast.error("Failed to load tasks");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [orgId]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+    setIsLoading(true);
+
+    // Subscribe to Tasks
+    const unsubTasks = subscribeToTasks(orgId, (fetchedTasks) => {
+      setTasks(fetchedTasks);
+      setIsLoading(false);
+    }, (err) => {
+      console.error("Tasks subscription error:", err);
+      setIsLoading(false);
+    });
+
+    // Subscribe to Clients
+    const unsubClients = subscribeToClients(orgId, (fetchedClients) => {
+      setClients(fetchedClients);
+    }, (err) => {
+      console.error("Clients subscription error:", err);
+    });
+
+    // Subscribe to Projects
+    const unsubProjects = subscribeToProjects(orgId, (fetchedProjects) => {
+      setProjects(fetchedProjects);
+    }, (err) => {
+      console.error("Projects subscription error:", err);
+    });
+
+    return () => {
+      unsubTasks();
+      unsubClients();
+      unsubProjects();
+    };
+  }, [orgId]);
 
   const filteredTasks = tasks.filter(t =>
     (priorityFilter === "all" || t.priority === priorityFilter) &&
@@ -642,30 +659,9 @@ export default function TasksPage() {
   const handleSaveNewTask = async (data: Partial<Task>) => {
     if (!orgId) { toast.error("Not authenticated"); return; }
     try {
-      const docRef = await addTask(orgId, {
-        title: data.title!,
-        status: data.status ?? "todo",
-        priority: data.priority ?? "medium",
-        dueDate: data.dueDate,
-        clientId: data.clientId,
-        clientName: data.clientName,
-        projectId: data.projectId,
-        projectName: data.projectName,
-      });
-      const newTask: Task = {
-        id: (docRef as any).id,
-        organization_id: orgId,
-        title: data.title!,
-        status: data.status ?? "todo",
-        priority: data.priority ?? "medium",
-        dueDate: data.dueDate,
-        clientId: data.clientId,
-        clientName: data.clientName,
-        projectId: data.projectId,
-        projectName: data.projectName,
-      };
-      setTasks(prev => [newTask, ...prev]);
+      await addTask(orgId, data as any);
       toast.success("Task created!");
+      setShowNewTask(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to create task");
@@ -673,29 +669,30 @@ export default function TasksPage() {
   };
 
   const handleSaveEdit = async (updated: Task) => {
-    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
     try {
       await updateTask(updated.id, {
         title: updated.title,
         status: updated.status,
         priority: updated.priority,
         dueDate: updated.dueDate,
+        clientId: updated.clientId,
+        projectId: updated.projectId,
       });
       toast.success("Task updated!");
     } catch (err) {
       toast.error("Failed to update task");
-      await loadData(); // Revert
     }
   };
 
+
   const handleDeleteTask = async (id: string) => {
+    // Optimistic delete
     setTasks(prev => prev.filter(t => t.id !== id));
     try {
       await deleteTask(id);
       toast.success("Task deleted");
     } catch (err) {
       toast.error("Failed to delete task");
-      await loadData();
     }
   };
 

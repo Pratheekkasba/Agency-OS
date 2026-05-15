@@ -23,19 +23,27 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    } else if (!loading && userData?.role === "client") {
-      router.replace("/portal");
-    } else if (!loading && user?.emailVerified) {
-      router.replace(getPostVerifyPath(userData?.role));
-    } else if (
-      !loading &&
-      userData?.role &&
-      !requiresEmailVerification(userData.role)
-    ) {
-      router.replace(getPostVerifyPath(userData.role));
-    }
+    const checkVerification = async () => {
+      if (!loading && !user) {
+        router.replace("/login");
+      } else if (!loading && userData?.role === "client") {
+        router.replace("/portal");
+      } else if (!loading && user?.emailVerified) {
+        if (userData?.role && userData.role !== "client") {
+          sendWelcomeEmail(user.displayName || undefined).catch((err) =>
+            console.error("welcome email auto-redirect:", err)
+          );
+        }
+        router.replace(getPostVerifyPath(userData?.role));
+      } else if (
+        !loading &&
+        userData?.role &&
+        !requiresEmailVerification(userData.role)
+      ) {
+        router.replace(getPostVerifyPath(userData.role));
+      }
+    };
+    checkVerification();
   }, [user, userData?.role, loading, userRefreshKey, router]);
 
   const handleResend = async () => {

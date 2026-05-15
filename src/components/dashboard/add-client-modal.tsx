@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { addClient, addProject, addUpdate, getTeamMembers, resolveOrganizationId } from "@/lib/firebase/firestore";
 import { notifyClientInviteEmail } from "@/lib/email/notify";
+import { auth } from "@/lib/firebase/config";
 import { toast } from "sonner";
 import type { TeamMember, Project } from "@/types";
 
@@ -274,6 +275,30 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
 
     setSaving(true);
     try {
+      // ── Ensure JWT has the organization_id custom claim before any Firestore write ──
+      // Firebase issues a fresh token on login that may not yet carry the claim.
+      // Force-refresh so Firestore Security Rules can validate org membership.
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        toast.error("Session expired. Please sign in again.");
+        setSaving(false);
+        return;
+      }
+
+      // Check if the claim is already in the token; if not, re-stamp it.
+      const tokenResult = await currentUser.getIdTokenResult();
+      if (!tokenResult.claims.organization_id) {
+        // Re-call set-claims to stamp the org id into the JWT
+        const freshToken = await currentUser.getIdToken();
+        await fetch("/api/auth/set-claims", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken: freshToken, organization_id: orgId, role: userData?.role ?? "owner" }),
+        });
+      }
+      // Always force-refresh so the latest claims are in the token Firestore will receive
+      await currentUser.getIdToken(/* forceRefresh */ true);
+
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
       const accessId = `OS-${Array.from({ length: 4 }, () =>
         chars[Math.floor(Math.random() * chars.length)]).join("")}`;
@@ -336,7 +361,12 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
       onClientAdded?.();
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.message || "Something went wrong. Please try again.");
+      const msg = err?.message || "";
+      if (msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("missing or insufficient")) {
+        toast.error("Permission denied — try signing out and back in, then onboard again.");
+      } else {
+        toast.error(msg || "Something went wrong. Please try again.");
+      }
     } finally {
       setSaving(false);
     }

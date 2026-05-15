@@ -208,3 +208,32 @@ export interface Update {
   updatedAt?: any;
 }
 
+// --- Chat ---
+
+/** One conversation thread between agency and a client. ID = "{orgId}_{clientId}" */
+export interface ChatConversation {
+  id: string;
+  organization_id: string;
+  clientId: string;
+  clientName: string;
+  lastMessage?: string;
+  lastMessageAt?: any;
+  /** Agency-side unread count (incremented when client sends). */
+  unreadAgency: number;
+  /** Client-side unread count (incremented when agency sends). */
+  unreadClient: number;
+  createdAt?: any;
+}
+
+/** A single chat bubble inside chats/{chatId}/messages */
+export interface ChatMessage {
+  id: string;
+  /** Denormalized for Firestore security rules. */
+  organization_id: string;
+  chatId: string;
+  text: string;
+  senderRole: "agency" | "client";
+  senderName: string;
+  sentAt: any;
+}
+

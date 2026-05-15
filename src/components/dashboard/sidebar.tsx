@@ -87,7 +87,7 @@ function SidebarItem({
       href={item.href}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 relative overflow-hidden group",
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 relative overflow-hidden group",
         collapsed && "justify-center px-2",
         isActive
           ? "bg-[#5B5CF6]/10 text-white font-semibold"
@@ -107,7 +107,7 @@ function SidebarItem({
 
       {!collapsed && (
         <>
-          <span className="flex-1 text-[14px] whitespace-nowrap tracking-wide">{item.label}</span>
+          <span className="flex-1 text-[14px] whitespace-nowrap tracking-wide truncate pr-2">{item.label}</span>
           {item.badge !== undefined && item.badge > 0 && (
             <span
               className={cn(
@@ -136,7 +136,7 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
 }
 
 function Divider() {
-  return <div className="h-px bg-[#1A1A24]/50 mx-3 my-3 shrink-0" />;
+  return <div className="h-px bg-[#1A1A24]/50 mx-4 my-3 shrink-0" />;
 }
 
 export function DashboardSidebar() {
@@ -221,14 +221,14 @@ export function DashboardSidebar() {
     >
       <div
         className={cn(
-          "h-[72px] border-b border-[#1A1A24] flex items-center shrink-0",
+          "h-[72px] border-b border-[#1A1A24] flex items-center shrink-0 w-full min-w-0",
           collapsed ? "justify-center px-2" : "px-5"
         )}
       >
         <Link
           href="/dashboard"
           className={cn(
-            "flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity",
+            "flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity w-full",
             collapsed && "justify-center"
           )}
           title={collapsed ? agencyName : undefined}
@@ -239,15 +239,15 @@ export function DashboardSidebar() {
             </span>
           </div>
           {!collapsed && (
-            <span className="text-[15px] font-bold text-white tracking-tight truncate font-headline">
+            <span className="text-[15px] font-bold text-white tracking-tight truncate font-headline flex-1 min-w-0">
               {agencyName}
             </span>
           )}
         </Link>
       </div>
 
-      <nav className="sidebar-nav-scroll px-3 py-4">
-        <div className="space-y-1.5">
+      <nav className="sidebar-nav-scroll px-4 py-4 w-full min-w-0">
+        <div className="space-y-1">
           {NAV_MAIN.map((item) => (
             <SidebarItem
               key={item.href}
@@ -260,7 +260,7 @@ export function DashboardSidebar() {
 
         <Divider />
         <SectionLabel label="Work" collapsed={collapsed} />
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {NAV_WORK.map((item) => (
             <SidebarItem
               key={item.href}
@@ -273,7 +273,7 @@ export function DashboardSidebar() {
 
         <Divider />
         <SectionLabel label="Inbox" collapsed={collapsed} />
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {NAV_INBOX.map((item) => (
             <SidebarItem
               key={item.href}
@@ -286,7 +286,7 @@ export function DashboardSidebar() {
 
         <Divider />
         <SectionLabel label="Team" collapsed={collapsed} />
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {NAV_TEAM.map((item) => (
             <SidebarItem
               key={item.href}
@@ -298,7 +298,7 @@ export function DashboardSidebar() {
         </div>
 
         <Divider />
-        <div className="space-y-1.5 pb-2">
+        <div className="space-y-1 pb-2">
           <SidebarItem
             item={{ href: "/dashboard/settings", label: "Settings", icon: Settings }}
             isActive={pathname.startsWith("/dashboard/settings")}
@@ -307,7 +307,7 @@ export function DashboardSidebar() {
         </div>
       </nav>
 
-      <div className="border-t border-[#1A1A24] bg-[#0B0B0F] shrink-0">
+      <div className="border-t border-[#1A1A24] bg-[#0B0B0F] shrink-0 w-full min-w-0">
         <div
           className={cn(
             "flex items-center border-b border-[#1A1A24]/60",
@@ -317,7 +317,7 @@ export function DashboardSidebar() {
           <button
             type="button"
             onClick={toggle}
-            className="p-2 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1A1A24] transition-colors"
+            className="p-2 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1A1A24] transition-colors shrink-0"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {collapsed ? (
@@ -329,13 +329,13 @@ export function DashboardSidebar() {
         </div>
 
         <div className={cn("p-3", collapsed && "px-2")}>
-          <div className="relative" ref={menuRef}>
+          <div className="relative w-full min-w-0" ref={menuRef}>
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               title={collapsed ? displayName : undefined}
               className={cn(
-                "flex items-center w-full gap-3 rounded-xl transition-colors text-left",
+                "flex items-center w-full min-w-0 gap-3 rounded-xl transition-colors text-left",
                 collapsed ? "justify-center p-2" : "px-3 py-2.5",
                 isMenuOpen ? "bg-[#1A1A24]" : "hover:bg-[#1A1A24]/60"
               )}
@@ -344,11 +344,11 @@ export function DashboardSidebar() {
                 {initials}
               </div>
               {!collapsed && (
-                <div className="flex-1 min-w-0 text-left">
-                  <p className="text-[14px] font-bold text-white truncate leading-tight">
+                <div className="flex-1 min-w-0 text-left overflow-hidden">
+                  <p className="text-[14px] font-bold text-white truncate leading-tight w-full">
                     {displayName}
                   </p>
-                  <p className="text-[12px] text-[#9CA3AF] font-medium leading-none mt-1 truncate">
+                  <p className="text-[12px] text-[#9CA3AF] font-medium leading-none mt-1 truncate w-full">
                     {user?.email}
                   </p>
                 </div>

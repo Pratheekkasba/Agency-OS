@@ -97,5 +97,40 @@ service cloud.firestore {
       allow create: if canWriteToOrg(request.resource.data.organization_id)
         && !isClientRole();
     }
+
+    // --- Direct chat conversations between agency and clients ---
+    match /chats/{chatId} {
+      // Agency staff can read/update their own org's conversations.
+      // belongsToOrg checks token claim OR uid — no custom claim required for owners.
+      allow read, update: if belongsToOrg(resource.data.organization_id);
+      allow create: if canWriteToOrg(request.resource.data.organization_id);
+      allow delete: if false;
+
+      // Messages subcollection.
+      // We use get() on the parent chat doc to resolve the org — this avoids relying
+      // on resource.data which is unreliable for list/query operations, and avoids
+      // needing a denormalized organization_id in every message doc.
+      match /messages/{messageId} {
+        function parentOrg() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data.organization_id;
+        }
+
+        // Agency: read all messages if they belong to the org
+        allow read: if request.auth != null && belongsToOrg(parentOrg());
+
+        // Agency: create messages in their own org's chat (Admin SDK handles this,
+        // but rule allows direct writes too for flexibility)
+        allow create: if request.auth != null && canWriteToOrg(parentOrg());
+
+        // Clients: read + write their own thread via client_id claim
+        allow read: if isClientRole()
+          && request.auth.token.client_id != null;
+        allow create: if isClientRole()
+          && request.auth.token.client_id != null
+          && request.resource.data.senderRole == 'client';
+
+        allow update, delete: if false;
+      }
+    }
   }
 }

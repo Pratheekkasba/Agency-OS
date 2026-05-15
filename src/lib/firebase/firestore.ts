@@ -12,6 +12,9 @@ import {
   serverTimestamp,
   writeBatch,
   QueryDocumentSnapshot,
+  onSnapshot,
+  orderBy,
+  increment,
 } from "firebase/firestore";
 import { auth, db } from "./config";
 import type {
@@ -23,6 +26,8 @@ import type {
   TeamMember,
   Message,
   MessageReply,
+  ChatConversation,
+  ChatMessage,
 } from "@/types";
 
 /** Firestore rejects `undefined` field values — omit them before every write */
@@ -534,4 +539,128 @@ export async function getUpdates(
   return sortByNewest(
     snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Update)
   ).slice(0, maxResults);
+}
+
+// --- Chat ---
+
+/**
+ * Returns the deterministic chat ID for an org+client pair,
+ * creating the conversation doc if it doesn't exist yet.
+ */
+export async function getOrCreateChat(
+  organization_id: string,
+  clientId: string,
+  clientName: string
+): Promise<string> {
+  const chatId = `${organization_id}_${clientId}`;
+  const ref = doc(db, "chats", chatId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(
+      ref,
+      stripUndefined({
+        organization_id,
+        clientId,
+        clientName,
+        lastMessage: null,
+        lastMessageAt: null,
+        unreadAgency: 0,
+        unreadClient: 0,
+        createdAt: serverTimestamp(),
+      })
+    );
+  }
+  return chatId;
+}
+
+/** Real-time subscription to all conversations for an org (sorted newest-first client-side). */
+export function subscribeToConversations(
+  organization_id: string,
+  callback: (convs: ChatConversation[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "chats"),
+    where("organization_id", "==", organization_id)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const convs = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }) as ChatConversation)
+        .sort((a, b) => {
+          const aMs = timestampMs(a.lastMessageAt ?? a.createdAt);
+          const bMs = timestampMs(b.lastMessageAt ?? b.createdAt);
+          return bMs - aMs;
+        });
+      callback(convs);
+    },
+    (error) => {
+      console.error("[Firestore] Error subscribing to conversations:", error);
+      if (onError) onError(error);
+    }
+  );
+}
+
+/** Real-time subscription to messages inside a single chat thread (ordered oldest-first). */
+export function subscribeToChatMessages(
+  chatId: string,
+  callback: (messages: ChatMessage[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  const q = query(
+    collection(db, "chats", chatId, "messages"),
+    orderBy("sentAt", "asc")
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const messages = snap.docs.map(
+        (d) => ({ id: d.id, ...d.data() }) as ChatMessage
+      );
+      callback(messages);
+    },
+    (error) => {
+      console.error(`[Firestore] Error subscribing to messages for chat ${chatId}:`, error);
+      if (onError) onError(error);
+    }
+  );
+}
+
+/**
+ * Append a message to a chat thread and update the conversation metadata.
+ * `senderRole` = "agency" for agency staff, "client" for client users.
+ */
+export async function sendChatMessage(
+  chatId: string,
+  organization_id: string,
+  text: string,
+  senderRole: "agency" | "client",
+  senderName: string
+): Promise<void> {
+  // Write the message document
+  await addDoc(collection(db, "chats", chatId, "messages"), {
+    organization_id,
+    chatId,
+    text: text.trim(),
+    senderRole,
+    senderName,
+    sentAt: serverTimestamp(),
+  });
+
+  // Update conversation metadata + increment the OTHER side's unread count
+  const chatRef = doc(db, "chats", chatId);
+  await updateDoc(chatRef, {
+    lastMessage: text.trim(),
+    lastMessageAt: serverTimestamp(),
+    ...(senderRole === "agency"
+      ? { unreadClient: increment(1) }
+      : { unreadAgency: increment(1) }),
+  });
+}
+
+/** Reset the agency's unread counter for a conversation (call when they open the thread). */
+export async function markChatReadByAgency(chatId: string): Promise<void> {
+  const chatRef = doc(db, "chats", chatId);
+  await updateDoc(chatRef, { unreadAgency: 0 });
 }

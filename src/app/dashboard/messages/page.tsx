@@ -1,420 +1,147 @@
-﻿"use client";
+"use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Mail, Send, Archive, UserPlus, Sparkles, X,
-  ChevronRight, CheckCircle, AlertCircle, HelpCircle,
-  FileEdit, Star, MessageSquare, Search, Filter,
-  Clock, ExternalLink, Loader2, Check, RefreshCw,
-  Globe, MessageCircle, Instagram, Inbox
+  Search, Plus, Send, Loader2, MessageSquare,
+  X, Check, Users,
 } from "lucide-react";
-import { toast } from "sonner";
-import type { Message, MessageIntent, MessageChannel } from "@/types";
 import { useAuth } from "@/context/AuthContext";
-import { getAllMessages, updateMessage } from "@/lib/firebase/firestore";
+import {
+  subscribeToConversations, subscribeToChatMessages,
+  markChatReadByAgency,
+  getAllClients, resolveOrganizationId,
+} from "@/lib/firebase/firestore";
+import { toast } from "sonner";
+import type { ChatConversation, ChatMessage, Client } from "@/types";
 
-// --- Config ---
-const INTENT_CONFIG: Record<MessageIntent, { label: string; icon: any; color: string; bg: string }> = {
-  question: { label: "Question", icon: HelpCircle, color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/20" },
-  approval: { label: "Approval", icon: CheckCircle, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/20" },
-  revision: { label: "Revision", icon: FileEdit, color: "text-amber-400", bg: "bg-amber-400/10 border-amber-400/20" },
-  brief: { label: "New Brief", icon: Star, color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/20" },
-  complaint: { label: "Complaint", icon: AlertCircle, color: "text-red-400", bg: "bg-red-400/10 border-red-400/20" },
-  general: { label: "General", icon: MessageSquare, color: "text-[#9CA3AF]", bg: "bg-[#374151]/20 border-[#374151]/30" },
-};
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-const CHANNEL_CONFIG: Record<MessageChannel, { icon: any; label: string; color: string }> = {
-  email: { icon: Mail, label: "Email", color: "text-blue-400" },
-  whatsapp: { icon: MessageCircle, label: "WhatsApp", color: "text-emerald-400" },
-  instagram: { icon: Instagram, label: "Instagram", color: "text-pink-400" },
-  portal: { icon: Globe, label: "Client Portal", color: "text-[#5B5CF6]" },
-  internal: { icon: MessageSquare, label: "Internal", color: "text-[#9CA3AF]" },
-};
+const PALETTE = [
+  "bg-[#5B5CF6]", "bg-[#0EA5E9]", "bg-[#10B981]",
+  "bg-[#F59E0B]", "bg-[#8B5CF6]", "bg-[#EC4899]",
+  "bg-[#14B8A6]", "bg-[#EF4444]",
+];
+const avatarBg = (name: string) =>
+  PALETTE[(name?.charCodeAt(0) ?? 0) % PALETTE.length];
 
-const STATUS_COLORS: Record<string, string> = {
-  new: "text-red-400 bg-red-400/10 border-red-400/20",
-  pending_approval: "text-[#5B5CF6] bg-[#5B5CF6]/10 border-[#5B5CF6]/20",
-  assigned: "text-amber-400 bg-amber-400/10 border-amber-400/20",
-  draft_ready: "text-[#5B5CF6] bg-[#5B5CF6]/10 border-[#5B5CF6]/20",
-  sent: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
-  resolved: "text-[#6B7280] bg-[#374151]/20 border-[#374151]/30",
-  archived: "text-[#6B7280] bg-[#1F1F2B] border-[#2D2D3D]",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  new: "Unread", pending_approval: "Pending Approval", assigned: "Assigned", draft_ready: "Draft Ready",
-  sent: "Replied", resolved: "Resolved", archived: "Archived",
-};
-
-// --- Helpers ---
-function timeAgo(millis: number) {
-  const diff = Date.now() - millis;
-  const m = Math.floor(diff / 60000);
-  const h = Math.floor(diff / 3600000);
-  const d = Math.floor(diff / 86400000);
-  if (m < 1) return "Just now";
-  if (h < 1) return `${m}m ago`;
-  if (d < 1) return `${h}h ago`;
-  return `${d}d ago`;
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
-// --- Main Page ---
-export default function MessagesPage() {
-  const { userData } = useAuth();
-  const orgId = userData?.organization_id;
+function fmtTime(ts: any): string {
+  if (!ts) return "";
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+  if (mins < 1) return "now";
+  if (hours < 1) return `${mins}m`;
+  if (days < 1) return `${hours}h`;
+  if (days < 7) return `${days}d`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [selected, setSelected] = useState<Message | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [search, setSearch] = useState("");
-  const [draftText, setDraftText] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [replySent, setReplySent] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+function fmtMessageTime(ts: any): string {
+  if (!ts) return "";
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric", minute: "2-digit", hour12: true,
+  });
+}
 
-  const fetchMessages = async () => {
-    if (!orgId) return;
-    setIsLoading(true);
-    try {
-      const data = await getAllMessages(orgId);
-      setMessages(data);
-    } catch (error) {
-      console.error("Failed to fetch messages:", error);
-      toast.error("Failed to load messages");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+function fmtDateDivider(ts: any): string {
+  if (!ts) return "";
+  const date = ts.toDate ? ts.toDate() : new Date(ts);
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date.toDateString() === now.toDateString()) return "Today";
+  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return date.toLocaleDateString("en-US", {
+    weekday: "long", month: "long", day: "numeric",
+  });
+}
 
-  useEffect(() => {
-    fetchMessages();
-  }, [orgId]);
+function isSameDay(a: any, b: any): boolean {
+  if (!a || !b) return false;
+  const da = a.toDate ? a.toDate() : new Date(a);
+  const db2 = b.toDate ? b.toDate() : new Date(b);
+  return da.toDateString() === db2.toDateString();
+}
 
-  useEffect(() => {
-    // Always reset composer when switching threads
-    setDraftText(selected?.aiDraft || "");
-    setReplySent(false);
-  }, [selected]);
+// ── New Chat Modal ────────────────────────────────────────────────────────────
 
-  const filtered = messages.filter(m =>
-    (statusFilter === "all" || m.status === statusFilter) &&
-    (!search || m.clientName?.toLowerCase().includes(search.toLowerCase()) || m.body.toLowerCase().includes(search.toLowerCase()) || m.fromName.toLowerCase().includes(search.toLowerCase()))
+function NewChatModal({
+  clients,
+  conversations,
+  onSelect,
+  onClose,
+}: {
+  clients: Client[];
+  conversations: ChatConversation[];
+  onSelect: (client: Client) => void;
+  onClose: () => void;
+}) {
+  const [q, setQ] = useState("");
+  const existingIds = new Set(conversations.map((c) => c.clientId));
+
+  const filtered = clients.filter((c) =>
+    c.name.toLowerCase().includes(q.toLowerCase()) ||
+    c.email?.toLowerCase().includes(q.toLowerCase())
   );
 
-  const unread = messages.filter(m => m.status === "new").length;
-
-  const handleGenerateDraft = async () => {
-    // This is now handled automatically by the webhook.
-    // If you want to regenerate, you could call a separate endpoint here.
-    if (!selected?.aiDraft) return;
-    setDraftText(selected.aiDraft);
-    toast.success("Draft loaded into composer!");
-  };
-
-  const handleSend = async () => {
-    if (!draftText.trim() || !selected) return;
-    
-    setIsGenerating(true); // Re-using this state for loading
-    try {
-      const res = await fetch("/api/messages/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messageId: selected.id,
-          draftText,
-          clientEmail: selected.fromContact,
-          subject: `Re: ${selected.subject || "Your Message"}`
-        })
-      });
-
-      if (!res.ok) throw new Error("Failed to send");
-
-      setMessages(prev => prev.map(m =>
-        m.id === selected.id ? { ...m, status: "sent", aiDraft: draftText } : m
-      ));
-      setReplySent(true);
-      toast.success("Reply approved and sent!");
-    } catch (err) {
-      toast.error("Failed to send reply");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleResolve = async (msgId: string) => {
-    try {
-      await updateMessage(msgId, { status: "resolved" });
-      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: "resolved" } : m));
-      if (selected?.id === msgId) setSelected(null);
-      toast.success("Marked as resolved");
-    } catch (err) {
-      toast.error("Failed to resolve message");
-    }
-  };
-
   return (
-    <div className="h-full flex flex-col animate-fade-in">
-      {/* Header */}
-      <div className="px-6 lg:px-8 pt-6 pb-4 border-b border-[#1F1F2B] shrink-0">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Inbox</h1>
-              {unread > 0 && (
-                <span className="px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">{unread}</span>
-              )}
-            </div>
-            <p className="text-sm text-[#9CA3AF] mt-0.5">All client messages across every channel</p>
-          </div>
-          <button
-            onClick={() => {
-              toast.info("Checking for new messages…");
-              fetchMessages();
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-[#131317] hover:bg-[#1A1A24] border border-[#1F1F2B] text-[#9CA3AF] hover:text-white text-sm font-semibold rounded-xl transition-all"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-[#0A0A10] border border-[#1F1F2B] rounded-2xl w-full max-w-md shadow-[0_40px_80px_rgba(0,0,0,0.6)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-[#1F1F2B]">
+          <h3 className="text-base font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>New Conversation</h3>
+          <button onClick={onClose} className="text-[#6B7280] hover:text-white transition-colors p-1 rounded-lg hover:bg-[#1A1A24]">
+            <X className="w-4 h-4" />
           </button>
         </div>
-
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="px-5 py-3 border-b border-[#1F1F2B]">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#6B7280]" />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search messages..." className="pl-8 pr-4 py-1.5 bg-[#131317] border border-[#1F1F2B] rounded-lg text-sm text-white placeholder-[#6B7280] outline-none w-52" />
-          </div>
-          {["all", "new", "draft_ready", "assigned", "resolved"].map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all capitalize ${
-                statusFilter === s
-                  ? "bg-[#5B5CF6]/15 text-[#5B5CF6] border border-[#5B5CF6]/30"
-                  : "text-[#9CA3AF] hover:text-white bg-[#131317] border border-[#1F1F2B]"
-              }`}
-            >
-              {STATUS_LABELS[s] || "All"}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Two-Panel Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Thread List */}
-        <div className="w-80 lg:w-96 border-r border-[#1F1F2B] flex flex-col overflow-hidden shrink-0">
-          <div className="flex-1 overflow-y-auto">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 text-[#5B5CF6] animate-spin mb-4" />
-                <p className="text-sm text-[#9CA3AF]">Loading messages...</p>
-              </div>
-            ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-                <Inbox className="w-10 h-10 text-[#374151] mb-3" />
-                <p className="text-sm text-[#9CA3AF]">No messages found</p>
-              </div>
-            ) : (
-              filtered.map(msg => {
-                const intentConf = INTENT_CONFIG[msg.intent ?? "general"];
-                const channelConf = CHANNEL_CONFIG[msg.channel];
-                const ChannelIcon = channelConf.icon;
-                const IntentIcon = intentConf.icon;
-                const isSelected = selected?.id === msg.id;
-                const isUnread = msg.status === "new";
-
-                return (
-                  <button
-                    key={msg.id}
-                    onClick={() => setSelected(msg)}
-                    className={`w-full text-left px-4 py-4 border-b border-[#1F1F2B] transition-all hover:bg-[#131317] relative ${
-                      isSelected ? "bg-[#131317] shadow-[inset_2px_0_0_0_#5B5CF6]" : ""
-                    }`}
-                  >
-                    {isUnread && (
-                      <div className="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#5B5CF6]" />
-                    )}
-                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className={`text-xs font-bold truncate ${isUnread ? "text-white" : "text-[#9CA3AF]"}`}>
-                          {msg.clientName}
-                        </span>
-                        <ChannelIcon className={`w-3 h-3 shrink-0 ${channelConf.color}`} />
-                      </div>
-                      <span className="text-[10px] text-[#6B7280] whitespace-nowrap shrink-0">
-                        {timeAgo(msg.receivedAt?.toMillis?.() ?? Date.now())}
-                      </span>
-                    </div>
-                    <p className={`text-xs mb-2 truncate ${isUnread ? "text-white font-medium" : "text-[#9CA3AF]"}`}>
-                      {msg.fromName}
-                    </p>
-                    <p className="text-xs text-[#6B7280] line-clamp-2 mb-2">{msg.body}</p>
-                    <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border ${intentConf.bg} ${intentConf.color}`}>
-                        <IntentIcon className="w-2.5 h-2.5" />
-                        {intentConf.label}
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${STATUS_COLORS[msg.status]}`}>
-                        {STATUS_LABELS[msg.status]}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })
-            )}
+            <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search clients…"
+              className="w-full bg-[#131317] border border-[#1F1F2B] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-[#4B5563] outline-none focus:border-[#5B5CF6]/50"
+            />
           </div>
         </div>
-
-        {/* Thread Detail */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {!selected ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-              <MessageSquare className="w-12 h-12 text-[#374151] mb-4" />
-              <h3 className="text-base font-bold text-white mb-2">Select a message</h3>
-              <p className="text-sm text-[#9CA3AF]">Choose a message from the inbox to view the conversation</p>
-            </div>
+        <div className="max-h-72 overflow-y-auto py-2">
+          {filtered.length === 0 ? (
+            <p className="text-sm text-[#6B7280] text-center py-8">No clients found</p>
           ) : (
-            <>
-              {/* Thread Header */}
-              <div className="px-6 py-4 border-b border-[#1F1F2B] shrink-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      {(() => {
-                        const intentConf = INTENT_CONFIG[selected.intent ?? "general"];
-                        const IntentIcon = intentConf.icon;
-                        return (
-                          <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded border ${intentConf.bg} ${intentConf.color}`}>
-                            <IntentIcon className="w-3 h-3" />
-                            {intentConf.label}
-                          </span>
-                        );
-                      })()}
-                      {selected.confidenceScore !== undefined && (
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded border bg-[#5B5CF6]/10 border-[#5B5CF6]/20 text-[#5B5CF6]">
-                          AI Confidence: {selected.confidenceScore}%
-                        </span>
-                      )}
-                      {(() => {
-                        const conf = CHANNEL_CONFIG[selected.channel];
-                        const Icon = conf.icon;
-                        return (
-                          <span className={`text-[10px] font-semibold flex items-center gap-1 ${conf.color}`}>
-                            <Icon className="w-3 h-3" />
-                            via {conf.label}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <h2 className="text-base font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                      {selected.subject || selected.body.slice(0, 60) + "…"}
-                    </h2>
-                    <p className="text-xs text-[#6B7280] mt-0.5">
-                      From <span className="text-[#9CA3AF] font-medium">{selected.fromName}</span> · {selected.clientName}
-                      {selected.assigneeName && <span> · Assigned to <span className="text-[#5B5CF6] font-medium">{selected.assigneeName}</span></span>}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleResolve(selected.id)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-[#131317] hover:bg-[#1A1A24] border border-[#1F1F2B] text-[#9CA3AF] hover:text-emerald-400 text-xs font-semibold rounded-lg transition-all"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      Resolve
-                    </button>
-                  </div>
+            filtered.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => onSelect(c)}
+                className="w-full flex items-center gap-3 px-5 py-3 hover:bg-[#131317] transition-colors text-left"
+              >
+                <div className={`w-9 h-9 rounded-full ${avatarBg(c.name)} flex items-center justify-center text-white text-xs font-bold shrink-0`}>
+                  {initials(c.name)}
                 </div>
-              </div>
-
-              {/* Message Body */}
-              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-                {/* Client message bubble */}
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
-                    {selected.fromName.split(" ").map(n => n[0]).join("").slice(0, 2)}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-baseline gap-2 mb-1.5">
-                      <span className="text-xs font-bold text-white">{selected.fromName}</span>
-                      <span className="text-[10px] text-[#6B7280]">{timeAgo(selected.receivedAt?.toMillis?.() ?? Date.now())}</span>
-                    </div>
-                    <div className="bg-[#131317] border border-[#1F1F2B] rounded-xl rounded-tl-none p-4">
-                      <p className="text-sm text-[#E5E7EB] leading-relaxed">{selected.body}</p>
-                    </div>
-                  </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-white truncate">{c.name}</p>
+                  <p className="text-xs text-[#6B7280] truncate">{c.email || c.companyName || "—"}</p>
                 </div>
-
-                {/* AI Draft Preview */}
-                {selected.status === "pending_approval" && !replySent && (
-                  <div className="border border-[#5B5CF6]/20 bg-[#5B5CF6]/5 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles className="w-4 h-4 text-[#5B5CF6]" />
-                      <span className="text-xs font-bold text-[#5B5CF6] uppercase tracking-wider">AI-Suggested Reply Ready for Approval</span>
-                    </div>
-                    <p className="text-sm text-[#9CA3AF] italic leading-relaxed line-clamp-4">The draft is loaded into the composer below. Edit it if necessary and click "Approve & Send".</p>
-                  </div>
+                {existingIds.has(c.id) && (
+                  <span className="text-[10px] font-bold text-[#5B5CF6] bg-[#5B5CF6]/10 border border-[#5B5CF6]/20 px-2 py-0.5 rounded-full shrink-0">
+                    Existing
+                  </span>
                 )}
-
-                {/* Sent reply confirmation */}
-                {replySent && (
-                  <div className="flex gap-3 justify-end">
-                    <div className="flex-1 max-w-md">
-                      <div className="flex items-baseline gap-2 mb-1.5 justify-end">
-                        <span className="text-[10px] text-[#6B7280]">just now</span>
-                        <span className="text-xs font-bold text-white">You</span>
-                      </div>
-                      <div className="bg-[#5B5CF6]/15 border border-[#5B5CF6]/25 rounded-xl rounded-tr-none p-4">
-                        <p className="text-sm text-[#E5E7EB] leading-relaxed">{draftText}</p>
-                      </div>
-                      <div className="flex items-center gap-1 mt-1.5 justify-end">
-                        <Check className="w-3 h-3 text-emerald-400" />
-                        <span className="text-[10px] text-emerald-400 font-semibold">Sent</span>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#5B5CF6] to-[#8183FF] flex items-center justify-center text-xs font-bold text-white shrink-0">
-                      OS
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Reply Composer */}
-              {!replySent && (
-                <div className="px-6 py-4 border-t border-[#1F1F2B] shrink-0">
-                  <div className="bg-[#131317] border border-[#1F1F2B] focus-within:border-[#5B5CF6]/40 rounded-xl transition-all overflow-hidden">
-                    <textarea
-                      value={draftText}
-                      onChange={e => setDraftText(e.target.value)}
-                      placeholder="Write a reply…"
-                      rows={4}
-                      className="w-full px-4 pt-3 pb-2 bg-transparent text-sm text-white placeholder-[#4B5563] outline-none resize-none"
-                    />
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-[#1F1F2B]">
-                      <div className="flex items-center gap-2">
-                        {selected.aiDraft && !draftText && (
-                          <button
-                            onClick={handleGenerateDraft}
-                            disabled={isGenerating}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-[#5B5CF6] hover:text-[#A4A6FF] transition-colors disabled:opacity-50"
-                          >
-                            {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                            {isGenerating ? "Generating…" : "Generate AI Draft"}
-                          </button>
-                        )}
-                      </div>
-                      <button
-                        onClick={handleSend}
-                        disabled={!draftText.trim() || isGenerating}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#5B5CF6] hover:bg-[#4F50DB] disabled:opacity-40 text-white text-sm font-bold rounded-lg transition-all"
-                      >
-                        {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-                        Approve & Send
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
+              </button>
+            ))
           )}
         </div>
       </div>
@@ -422,3 +149,464 @@ export default function MessagesPage() {
   );
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
+export default function MessagesPage() {
+  const { userData, user } = useAuth();
+  const orgId = resolveOrganizationId(userData);
+
+  const [conversations, setConversations] = useState<ChatConversation[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const [loadingConvs, setLoadingConvs] = useState(true);
+  const [loadingMsgs, setLoadingMsgs] = useState(false);
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [search, setSearch] = useState("");
+  const [startingChat, setStartingChat] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const unsubMsgsRef = useRef<(() => void) | null>(null);
+
+  const activeConv = conversations.find((c) => c.id === activeChatId) ?? null;
+  const agentName = userData?.name || user?.displayName || "Agency";
+
+  // Subscribe to conversations list (real-time)
+  useEffect(() => {
+    if (!orgId) return;
+    setLoadingConvs(true);
+    const unsub = subscribeToConversations(
+      orgId,
+      (convs) => {
+        setConversations(convs);
+        setLoadingConvs(false);
+      },
+      (error) => {
+        console.error("Conversations load error:", error);
+        toast.error("Failed to load conversations");
+        setLoadingConvs(false);
+      }
+    );
+    return unsub;
+  }, [orgId]);
+
+  // Load clients for new-chat modal
+  useEffect(() => {
+    if (!orgId) return;
+    getAllClients(orgId).then(setClients).catch(() => {});
+  }, [orgId]);
+
+  // Subscribe to messages when active chat changes
+  useEffect(() => {
+    // Cleanup previous listener
+    if (unsubMsgsRef.current) {
+      unsubMsgsRef.current();
+      unsubMsgsRef.current = null;
+    }
+    if (!activeChatId) {
+      setMessages([]);
+      return;
+    }
+    setLoadingMsgs(true);
+    const unsub = subscribeToChatMessages(
+      activeChatId,
+      (msgs) => {
+        setMessages(msgs);
+        setLoadingMsgs(false);
+      },
+      (error) => {
+        console.error("Messages load error:", error);
+        toast.error("Failed to load messages");
+        setLoadingMsgs(false);
+      }
+    );
+    unsubMsgsRef.current = unsub;
+    // Mark as read
+    markChatReadByAgency(activeChatId).catch(() => {});
+    return () => {
+      unsub();
+      unsubMsgsRef.current = null;
+    };
+  }, [activeChatId]);
+
+  // Auto-scroll to bottom when messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 140) + "px";
+  }, [text]);
+
+  const openConversation = useCallback((chatId: string) => {
+    setActiveChatId(chatId);
+    setText("");
+    // Mark read
+    markChatReadByAgency(chatId).catch(() => {});
+    // Update local unread to 0 instantly (optimistic)
+    setConversations((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, unreadAgency: 0 } : c))
+    );
+  }, []);
+
+  const handleStartNewChat = async (client: Client) => {
+    if (!orgId) return;
+    setShowNewChat(false);
+    setStartingChat(true);
+    try {
+      // Use the server-side API route (Admin SDK) to create the chat doc.
+      // This sidesteps Firestore client security rules entirely — no JWT
+      // custom-claim dependency.
+      const idToken = await user?.getIdToken();
+      const res = await fetch("/api/chat/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ clientId: client.id, clientName: client.name }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+
+      const { chatId } = await res.json();
+      openConversation(chatId);
+    } catch (err: any) {
+      console.error("[Chat] Failed to open conversation:", err);
+      toast.error("Failed to open conversation: " + (err?.message || "unknown error"));
+    } finally {
+      setStartingChat(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!text.trim() || !activeChatId || sending) return;
+    const msg = text.trim();
+    setText("");
+    setSending(true);
+    try {
+      const idToken = await user?.getIdToken();
+      const res = await fetch("/api/chat/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          chatId: activeChatId,
+          text: msg,
+          senderName: agentName,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+    } catch (err: any) {
+      console.error("[Chat] Failed to send:", err);
+      toast.error("Failed to send message");
+      setText(msg); // restore on failure
+    } finally {
+      setSending(false);
+      textareaRef.current?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const filtered = conversations.filter(
+    (c) =>
+      !search ||
+      c.clientName.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadAgency || 0), 0);
+
+  return (
+    <div className="h-full flex overflow-hidden bg-[#0B0B0F]">
+
+      {/* ── Left Panel: Conversation List ── */}
+      <div className="w-[300px] lg:w-[340px] flex flex-col border-r border-[#1F1F2B] shrink-0">
+        {/* Header */}
+        <div className="px-5 pt-5 pb-3 border-b border-[#1F1F2B] shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Messages
+              </h1>
+              {totalUnread > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-[#5B5CF6] text-white rounded-full min-w-[18px] text-center">
+                  {totalUnread}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={() => setShowNewChat(true)}
+              disabled={startingChat}
+              className="w-8 h-8 flex items-center justify-center bg-[#5B5CF6] hover:bg-[#4F50DB] text-white rounded-xl transition-all shadow-[0_2px_10px_rgba(91,92,246,0.3)] disabled:opacity-50"
+              title="New conversation"
+            >
+              {startingChat ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            </button>
+          </div>
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-[#6B7280] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search…"
+              className="w-full bg-[#131317] border border-[#1F1F2B] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder-[#4B5563] outline-none focus:border-[#5B5CF6]/40 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* Conversation list */}
+        <div className="flex-1 overflow-y-auto">
+          {loadingConvs ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-6 h-6 text-[#5B5CF6] animate-spin" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-5 text-center">
+              <div className="w-12 h-12 rounded-2xl bg-[#131317] border border-[#1F1F2B] flex items-center justify-center mb-3">
+                <MessageSquare className="w-6 h-6 text-[#2D2D3D]" />
+              </div>
+              <p className="text-sm font-semibold text-white mb-1">
+                {search ? "No results" : "No conversations yet"}
+              </p>
+              <p className="text-xs text-[#6B7280]">
+                {search ? "Try a different name" : "Click + to start chatting with a client"}
+              </p>
+            </div>
+          ) : (
+            filtered.map((conv) => {
+              const isActive = conv.id === activeChatId;
+              const hasUnread = (conv.unreadAgency ?? 0) > 0;
+
+              return (
+                <button
+                  key={conv.id}
+                  onClick={() => openConversation(conv.id)}
+                  className={`w-full text-left flex items-center gap-3 px-4 py-3.5 border-b border-[#1A1A24] transition-all relative group ${
+                    isActive
+                      ? "bg-[#131317] shadow-[inset_2px_0_0_0_#5B5CF6]"
+                      : "hover:bg-[#0F0F15]"
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div className={`relative w-10 h-10 rounded-full ${avatarBg(conv.clientName)} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+                    {initials(conv.clientName)}
+                    {hasUnread && (
+                      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#5B5CF6] rounded-full text-[9px] font-bold text-white flex items-center justify-center border border-[#0B0B0F]">
+                        {conv.unreadAgency > 9 ? "9+" : conv.unreadAgency}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className={`text-sm font-semibold truncate ${hasUnread ? "text-white" : "text-[#D1D5DB]"}`}>
+                        {conv.clientName}
+                      </span>
+                      <span className="text-[10px] text-[#6B7280] shrink-0 ml-2">
+                        {fmtTime(conv.lastMessageAt)}
+                      </span>
+                    </div>
+                    <p className={`text-xs truncate ${hasUnread ? "text-[#9CA3AF] font-medium" : "text-[#6B7280]"}`}>
+                      {conv.lastMessage || "No messages yet"}
+                    </p>
+                  </div>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* ── Right Panel: Chat Thread ── */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {!activeChatId ? (
+          /* Empty State */
+          <div className="flex-1 flex flex-col items-center justify-center text-center px-8">
+            <div className="w-16 h-16 rounded-2xl bg-[#131317] border border-[#1F1F2B] flex items-center justify-center mb-4">
+              <Users className="w-8 h-8 text-[#2D2D3D]" />
+            </div>
+            <h3 className="text-base font-bold text-white mb-2" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Select a conversation
+            </h3>
+            <p className="text-sm text-[#6B7280] max-w-xs">
+              Choose a conversation from the left, or start a new one by clicking the <strong className="text-[#9CA3AF]">+</strong> button.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Chat Header */}
+            <div className="px-5 py-4 border-b border-[#1F1F2B] shrink-0 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-full ${avatarBg(activeConv?.clientName ?? "")} flex items-center justify-center text-white text-sm font-bold shrink-0`}>
+                  {initials(activeConv?.clientName ?? "")}
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {activeConv?.clientName}
+                  </p>
+                  <p className="text-[11px] text-[#6B7280]">Client · Direct message</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#10B981]/10 border border-[#10B981]/20 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                  <span className="text-[10px] font-semibold text-[#10B981]">Live</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Message Thread */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-1">
+              {loadingMsgs ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-6 h-6 text-[#5B5CF6] animate-spin" />
+                </div>
+              ) : messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[#131317] border border-[#1F1F2B] flex items-center justify-center mb-3">
+                    <MessageSquare className="w-5 h-5 text-[#2D2D3D]" />
+                  </div>
+                  <p className="text-sm text-[#6B7280]">No messages yet. Say hello! 👋</p>
+                </div>
+              ) : (
+                messages.map((msg, i) => {
+                  const isAgency = msg.senderRole === "agency";
+                  const prev = messages[i - 1];
+                  const showDate = !prev || !isSameDay(prev.sentAt, msg.sentAt);
+                  const isSameSenderAsPrev =
+                    prev?.senderRole === msg.senderRole &&
+                    !showDate;
+                  const isLast =
+                    i === messages.length - 1 ||
+                    messages[i + 1]?.senderRole !== msg.senderRole;
+
+                  return (
+                    <div key={msg.id}>
+                      {/* Date divider */}
+                      {showDate && (
+                        <div className="flex items-center gap-3 my-4">
+                          <div className="flex-1 h-px bg-[#1F1F2B]" />
+                          <span className="text-[10px] font-semibold text-[#4B5563] uppercase tracking-wider shrink-0">
+                            {fmtDateDivider(msg.sentAt)}
+                          </span>
+                          <div className="flex-1 h-px bg-[#1F1F2B]" />
+                        </div>
+                      )}
+
+                      {/* Bubble row */}
+                      <div
+                        className={`flex items-end gap-2.5 ${isAgency ? "flex-row-reverse" : "flex-row"} ${isSameSenderAsPrev ? "mt-0.5" : "mt-3"}`}
+                      >
+                        {/* Avatar — only on last in group */}
+                        <div className="w-7 shrink-0">
+                          {isLast && (
+                            <div className={`w-7 h-7 rounded-full ${isAgency ? "bg-gradient-to-br from-[#5B5CF6] to-[#7C3AED]" : avatarBg(msg.senderName)} flex items-center justify-center text-white text-[10px] font-bold`}>
+                              {isAgency ? "OS" : initials(msg.senderName)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Bubble */}
+                        <div className={`max-w-[68%] group`}>
+                          {!isSameSenderAsPrev && (
+                            <p className={`text-[10px] font-semibold mb-1 ${isAgency ? "text-right text-[#6B7280]" : "text-left text-[#6B7280]"}`}>
+                              {msg.senderName}
+                            </p>
+                          )}
+                          <div
+                            className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed transition-all ${
+                              isAgency
+                                ? "bg-[#5B5CF6] text-white rounded-tr-sm shadow-[0_2px_12px_rgba(91,92,246,0.25)]"
+                                : "bg-[#1A1A24] border border-[#2D2D3D] text-[#E5E7EB] rounded-tl-sm"
+                            }`}
+                          >
+                            {msg.text}
+                          </div>
+                          {/* Timestamp on last bubble of group */}
+                          {isLast && (
+                            <p className={`text-[10px] text-[#4B5563] mt-1 ${isAgency ? "text-right" : "text-left"}`}>
+                              {fmtMessageTime(msg.sentAt)}
+                              {isAgency && (
+                                <span className="ml-1 inline-flex items-center gap-[-4px]">
+                                  <Check className="w-3 h-3 text-[#5B5CF6] inline" />
+                                  <Check className="w-3 h-3 text-[#5B5CF6] inline -ml-1.5" />
+                                </span>
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Composer */}
+            <div className="px-5 py-4 border-t border-[#1F1F2B] shrink-0">
+              <div className="flex items-end gap-3 bg-[#131317] border border-[#1F1F2B] focus-within:border-[#5B5CF6]/40 rounded-2xl px-4 py-3 transition-all">
+                <textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={`Message ${activeConv?.clientName ?? "client"}…`}
+                  rows={1}
+                  className="flex-1 bg-transparent text-sm text-white placeholder-[#4B5563] outline-none resize-none leading-relaxed max-h-[140px] overflow-y-auto"
+                  style={{ minHeight: "24px" }}
+                />
+                <button
+                  onClick={handleSend}
+                  disabled={!text.trim() || sending}
+                  className="w-8 h-8 flex items-center justify-center bg-[#5B5CF6] hover:bg-[#4F50DB] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-all shrink-0 shadow-[0_2px_8px_rgba(91,92,246,0.3)]"
+                >
+                  {sending
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Send className="w-3.5 h-3.5" />
+                  }
+                </button>
+              </div>
+              <p className="text-[10px] text-[#3D3D4D] mt-2 pl-1">
+                Press <kbd className="px-1 py-0.5 bg-[#1A1A24] border border-[#2D2D3D] rounded text-[9px]">Enter</kbd> to send · <kbd className="px-1 py-0.5 bg-[#1A1A24] border border-[#2D2D3D] rounded text-[9px]">Shift+Enter</kbd> for new line
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* New Chat Modal */}
+      {showNewChat && (
+        <NewChatModal
+          clients={clients}
+          conversations={conversations}
+          onSelect={handleStartNewChat}
+          onClose={() => setShowNewChat(false)}
+        />
+      )}
+    </div>
+  );
+}

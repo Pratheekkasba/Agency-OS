@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { dispatchApprovedDraft } from "../webhooks/inbox/route";
+import { dispatchApprovedDraft } from "@/app/api/webhooks/inbox/route";
 
 export async function POST(req: NextRequest) {
     try {

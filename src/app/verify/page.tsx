@@ -30,6 +30,7 @@ export default function VerifyEmailPage() {
         router.replace("/portal");
       } else if (!loading && user?.emailVerified) {
         if (userData?.role && userData.role !== "client") {
+          sessionStorage.removeItem("agency_os_welcome_banner_dismissed");
           sendWelcomeEmail(user.displayName || undefined).catch((err) =>
             console.error("welcome email auto-redirect:", err)
           );
@@ -77,6 +78,7 @@ export default function VerifyEmailPage() {
       const verified = await refreshUser();
       if (verified) {
         if (userData?.role && userData.role !== "client") {
+          sessionStorage.removeItem("agency_os_welcome_banner_dismissed");
           await sendWelcomeEmail(
             auth.currentUser?.displayName || undefined
           ).catch((err) => console.error("welcome email:", err));

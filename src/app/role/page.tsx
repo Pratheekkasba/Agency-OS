@@ -49,28 +49,36 @@ export default function RoleSelectionPage() {
       // Stamp organization_id into the Firebase Auth JWT via Admin SDK
       // This is what makes Firestore Security Rules enforce org isolation
       const idToken = await auth.currentUser.getIdToken();
-      await fetch("/api/auth/set-claims", {
+      const claimsRes = await fetch("/api/auth/set-claims", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idToken, organization_id, role: "owner" }),
       });
+      if (!claimsRes.ok) {
+        const err = await claimsRes.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to set security claims");
+      }
       // Force-refresh the token so the new claim is active immediately
       await auth.currentUser.getIdToken(true);
 
       localStorage.setItem("agency-role", "owner");
       localStorage.setItem("agency-id", organization_id);
 
-      await fetch("/api/auth/send-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: auth.currentUser.email }),
-      }).catch((err) => console.error("Failed to send verification email:", err));
+      await auth.currentUser.reload();
 
-      if (!localStorage.getItem("agency_os_welcome_sent")) {
-        const welcomed = await sendWelcomeEmail(
-          auth.currentUser.displayName || undefined
+      if (!auth.currentUser.emailVerified) {
+        await fetch("/api/auth/send-verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: auth.currentUser.email }),
+        }).catch((err) => console.error("Failed to send verification email:", err));
+      }
+
+      if (auth.currentUser.emailVerified) {
+        sessionStorage.removeItem("agency_os_welcome_banner_dismissed");
+        await sendWelcomeEmail(auth.currentUser.displayName || undefined).catch(
+          (err) => console.error("welcome email:", err)
         );
-        if (welcomed) localStorage.setItem("agency_os_welcome_sent", "1");
       }
 
       router.push(
@@ -132,7 +140,7 @@ export default function RoleSelectionPage() {
 
       // Stamp organization_id into the Firebase Auth JWT via Admin SDK
       const idToken = await auth.currentUser.getIdToken();
-      await fetch("/api/auth/set-claims", {
+      const claimsRes = await fetch("/api/auth/set-claims", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -142,6 +150,10 @@ export default function RoleSelectionPage() {
           client_id: clientData.id,
         }),
       });
+      if (!claimsRes.ok) {
+        const err = await claimsRes.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to set security claims");
+      }
       // Force-refresh so claim is immediately active
       await auth.currentUser.getIdToken(true);
 

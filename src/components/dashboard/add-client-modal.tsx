@@ -290,11 +290,15 @@ export function AddClientModal({ isOpen, onClose, onClientAdded }: AddClientModa
       if (!tokenResult.claims.organization_id) {
         // Re-call set-claims to stamp the org id into the JWT
         const freshToken = await currentUser.getIdToken();
-        await fetch("/api/auth/set-claims", {
+        const claimsRes = await fetch("/api/auth/set-claims", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ idToken: freshToken, organization_id: orgId, role: userData?.role ?? "owner" }),
+          body: JSON.stringify({ idToken: freshToken }),
         });
+        if (!claimsRes.ok) {
+          const err = await claimsRes.json().catch(() => ({}));
+          throw new Error(err.error || "Failed to refresh session claims");
+        }
       }
       // Always force-refresh so the latest claims are in the token Firestore will receive
       await currentUser.getIdToken(/* forceRefresh */ true);

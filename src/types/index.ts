@@ -17,6 +17,8 @@ export interface UserData {
   agencyName?: string;
   /** Set when role is client — links user to one clients/{id} document */
   clientId?: string;
+  welcomeEmailSent?: boolean;
+  welcomeShownInApp?: boolean;
   created_at?: any;
   // Soft-delete support
   is_deleted?: boolean;

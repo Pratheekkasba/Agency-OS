@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   MoreHorizontal,
   Download,
-  ArrowUpRight,
   TrendingUp,
   Clock,
   FileText,
@@ -18,10 +17,9 @@ import {
   Send,
 } from "lucide-react";
 import { AddClientModal } from "@/components/dashboard/add-client-modal";
-import { ClientSettingsPanel } from "@/components/dashboard/client-settings-panel";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/context/AuthContext";
-import { getAllClients, getUpdates, resolveOrganizationId } from "@/lib/firebase/firestore";
+import { getAllClients, resolveOrganizationId } from "@/lib/firebase/firestore";
 import { toast } from "sonner";
 
 // --- helpers ---
@@ -79,23 +77,6 @@ function statusBadge(status: string) {
   return "bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20";
 }
 
-// Mini sparkline (SVG) – growth illustration for Total Clients
-function Sparkline({ count }: { count: number }) {
-  // Generate a simple ascending path based on count
-  const pts = [0, 0.2, 0.1, 0.45, 0.35, 0.6, 0.5, 0.75, 0.65, 0.9, 0.85, 1]
-    .slice(0, Math.max(4, Math.min(12, count + 2)));
-  const w = 64, h = 24;
-  const step = w / (pts.length - 1);
-  const path = pts
-    .map((v, i) => `${i === 0 ? "M" : "L"}${i * step},${h - v * h * 0.9}`)
-    .join(" ");
-  return (
-    <svg width={w} height={h} className="opacity-70">
-      <path d={path} fill="none" stroke="#F59E0B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 // --- Component ---
 
 export default function DashboardPage() {
@@ -105,12 +86,9 @@ export default function DashboardPage() {
 
   const { userData } = useAuth();
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [activeClient, setActiveClient] = useState<any>(null);
   const [filter, setFilter] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const [clients, setClients] = useState<any[]>([]);
-  const [recentUpdates, setRecentUpdates] = useState<any[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const copyToClipboard = (text: string) => {
@@ -127,8 +105,6 @@ export default function DashboardPage() {
     try {
       const fetchedClients = await getAllClients(orgId);
       setClients(fetchedClients);
-      const fetchedUpdates = await getUpdates(orgId);
-      setRecentUpdates(fetchedUpdates.slice(0, 5));
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
       toast.error("Failed to load dashboard data");
@@ -140,11 +116,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const openSettings = (client: any) => {
-    setActiveClient(client);
-    setIsSettingsOpen(true);
-  };
 
   // --- Derived data ---
 
@@ -188,9 +159,9 @@ export default function DashboardPage() {
 
       {/* --- Header & Quick Actions --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white font-headline">Overview</h1>
-          <p className="text-sm text-[#9CA3AF] mt-1">
+        <div className="min-w-0">
+          <h1 className="hidden md:block text-2xl font-bold text-white font-headline">Overview</h1>
+          <p className="text-sm text-[#9CA3AF] mt-1 md:mt-1">
             Manage your clients and send weekly updates.
           </p>
         </div>
@@ -241,14 +212,9 @@ export default function DashboardPage() {
           <p className="text-2xl font-bold text-white font-headline">
             {clients.filter((c) => c.status === "Active").length}
           </p>
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-xs text-[#10B981] flex items-center gap-1">
-              <ArrowUpRight className="w-3 h-3" /> +2 this month
-            </p>
-            <span className="text-[10px] font-semibold text-[#6B7280] bg-[#1A1A24] border border-[#2D2D3D] px-2 py-0.5 rounded-full">
-              Retainer MRR
-            </span>
-          </div>
+          <p className="text-xs text-[#9CA3AF] mt-2">
+            {clients.filter((c) => c.status === "Active").length} of {clients.length} in portfolio
+          </p>
         </div>
 
         {/* Needs Update – with avg delay */}
@@ -272,7 +238,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Total Clients – sparkline */}
+        {/* Total Clients */}
         <div className="bg-[#131317] border border-[#1F1F2B] rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <h3 className="text-sm font-medium text-[#9CA3AF]">Total Clients</h3>
@@ -280,11 +246,10 @@ export default function DashboardPage() {
               <Users className="w-4 h-4" />
             </span>
           </div>
-          <div className="flex items-end justify-between">
-            <p className="text-2xl font-bold text-white font-headline">{clients.length}</p>
-            <Sparkline count={clients.length} />
-          </div>
-          <p className="text-xs text-[#9CA3AF] mt-2 flex items-center gap-1">All time · growing</p>
+          <p className="text-2xl font-bold text-white font-headline">{clients.length}</p>
+          <p className="text-xs text-[#9CA3AF] mt-2">
+            {clients.filter((c) => c.status === "Paused").length} paused
+          </p>
         </div>
       </div>
 
@@ -513,7 +478,6 @@ export default function DashboardPage() {
         onClose={() => setIsAddClientOpen(false)}
         onClientAdded={fetchData}
       />
-      <ClientSettingsPanel isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
     </div>
   );
 }

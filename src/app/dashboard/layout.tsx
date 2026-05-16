@@ -7,6 +7,8 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardTopNav } from "@/components/dashboard/top-nav";
 import { requiresEmailVerification } from "@/lib/auth/email-verification";
 import { SidebarProvider } from "@/context/SidebarContext";
+import { MobileNavDrawer } from "@/components/dashboard/mobile-nav-drawer";
+import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, userData, loading, userRefreshKey } = useAuth();
@@ -44,8 +46,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <SidebarProvider>
       <div suppressHydrationWarning className="h-screen bg-[#0B0B0F] flex overflow-hidden">
         <DashboardSidebar />
+        <MobileNavDrawer />
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           <DashboardTopNav />
+          <WelcomeBanner />
           <main suppressHydrationWarning className="flex-1 overflow-hidden relative min-h-0">
             {children}
           </main>

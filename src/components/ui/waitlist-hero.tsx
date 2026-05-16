@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useRef } from "react"
 
@@ -296,7 +296,7 @@ export const WaitlistHero = () => {
                         className="text-center mb-4"
                         style={{ fontFamily: "'Inter', sans-serif", fontSize: "clamp(1rem, 2vw, 1.15rem)", lineHeight: 1.75, color: "#A1A1AA", maxWidth: 480 }}
                     >
-                        Agency OS replaces your inbox, project tracker, client portal, and analytics --- with one unified platform powered by Google AI.
+                        Agency OS replaces your inbox, project tracker, client portal, and analytics—with one unified platform powered by Google AI.
                     </p>
 
                     {/* Pill badge --- trust signal (moved closer to form) */}

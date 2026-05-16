@@ -4,13 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 /**
  * POST /api/chat/start
- *
- * Creates (or confirms) a chat conversation between the agency and a client.
- * Uses Admin SDK so it bypasses Firestore client security rules — no JWT
- * custom-claim dependency on the caller.
- *
- * Body: { clientId: string; clientName: string }
- * Header: Authorization: Bearer <idToken>
+ * Agency: any client in org. Client: only their own clientId.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -21,18 +15,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing Authorization header" }, { status: 401 });
     }
 
-    // Verify the caller and extract their uid (= organization_id for owners)
     const decoded = await adminAuth.verifyIdToken(idToken);
     const uid = decoded.uid;
-    // organization_id from claim, fall back to uid (agency owners)
+    const tokenRole = (decoded as { role?: string }).role;
+    const tokenClientId = (decoded as { client_id?: string }).client_id;
     const organization_id: string =
-      (decoded as any).organization_id ?? uid;
+      (decoded as { organization_id?: string }).organization_id ?? uid;
 
     const { clientId, clientName } = await req.json();
 
-    if (!clientId || !clientName) {
-      return NextResponse.json({ error: "Missing clientId or clientName" }, { status: 400 });
+    if (!clientId) {
+      return NextResponse.json({ error: "Missing clientId" }, { status: 400 });
     }
+
+    const isClient = tokenRole === "client";
+
+    if (isClient) {
+      if (!tokenClientId || tokenClientId !== clientId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else {
+      const clientSnap = await adminDb.collection("clients").doc(clientId).get();
+      if (!clientSnap.exists || clientSnap.data()?.organization_id !== organization_id) {
+        return NextResponse.json({ error: "Client not found" }, { status: 404 });
+      }
+    }
+
+    const resolvedName =
+      clientName ||
+      (isClient
+        ? "Client"
+        : ((await adminDb.collection("clients").doc(clientId).get()).data()?.name as string) ||
+          "Client");
 
     const chatId = `${organization_id}_${clientId}`;
     const chatRef = adminDb.collection("chats").doc(chatId);
@@ -42,7 +56,7 @@ export async function POST(req: NextRequest) {
       await chatRef.set({
         organization_id,
         clientId,
-        clientName,
+        clientName: resolvedName,
         lastMessage: null,
         lastMessageAt: null,
         unreadAgency: 0,
@@ -52,10 +66,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ chatId }, { status: 200 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[Chat/start] Error:", err);
     return NextResponse.json(
-      { error: err?.message ?? "Failed to create conversation" },
+      { error: err instanceof Error ? err.message : "Failed to create conversation" },
       { status: 500 }
     );
   }

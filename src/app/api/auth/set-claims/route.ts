@@ -1,44 +1,111 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebase/admin";
+import { adminAuth, adminDb } from "@/lib/firebase/admin";
 
 /**
  * POST /api/auth/set-claims
  *
- * Sets organization_id (and optionally role) as a Firebase Auth custom claim
- * so that Firestore Security Rules can enforce org-level data isolation.
+ * Stamps Firebase Auth custom claims from the user's Firestore profile.
+ * Claims are never taken from client-supplied org/role alone — only users/{uid} is authoritative.
  *
- * Called after role selection --- the client sends its Firebase ID token so we
- * can verify the caller, then we set the claim server-side via Admin SDK.
- *
- * Body: { idToken: string; organization_id: string; role: string; client_id?: string }
+ * Body: { idToken: string }
  */
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { idToken, organization_id, role, client_id } = body;
+        const { idToken } = body;
 
-        if (!idToken || !organization_id || !role) {
+        if (!idToken) {
             return NextResponse.json(
-                { error: "Missing required fields: idToken, organization_id, role" },
+                { error: "Missing required field: idToken" },
                 { status: 400 }
             );
         }
 
-        // Verify the caller's token --- this ensures only a legitimate signed-in
-        // user can trigger this endpoint (not an anonymous HTTP call)
         const decoded = await adminAuth.verifyIdToken(idToken);
         const uid = decoded.uid;
 
-        // Set the custom claims on their Auth token
-        // These appear in request.auth.token inside Firestore Rules
+        const userSnap = await adminDb.collection("users").doc(uid).get();
+        if (!userSnap.exists) {
+            return NextResponse.json(
+                { error: "User profile not found. Complete role selection first." },
+                { status: 404 }
+            );
+        }
+
+        const user = userSnap.data()!;
+        const organization_id = user.organization_id as string | undefined;
+        const role = user.role as string | undefined;
+        const client_id = user.clientId as string | undefined;
+
+        if (!organization_id || !role) {
+            return NextResponse.json(
+                { error: "User profile is missing organization_id or role." },
+                { status: 400 }
+            );
+        }
+
+        if (role === "client") {
+            if (!client_id) {
+                return NextResponse.json(
+                    { error: "Client profile is missing clientId." },
+                    { status: 400 }
+                );
+            }
+            const clientSnap = await adminDb.collection("clients").doc(client_id).get();
+            if (!clientSnap.exists) {
+                return NextResponse.json({ error: "Linked client record not found." }, { status: 403 });
+            }
+            const client = clientSnap.data()!;
+            if (client.is_deleted === true) {
+                return NextResponse.json({ error: "Client access revoked." }, { status: 403 });
+            }
+            if (client.organization_id !== organization_id) {
+                return NextResponse.json(
+                    { error: "Client does not belong to the user's organization." },
+                    { status: 403 }
+                );
+            }
+        } else if (role === "owner" && organization_id !== uid) {
+            return NextResponse.json(
+                { error: "Owner organization_id must match the authenticated UID." },
+                { status: 403 }
+            );
+        }
+
+        // Reject mismatched client hints (logged for debugging; claims still come from Firestore)
+        const { organization_id: reqOrg, role: reqRole, client_id: reqClientId } = body;
+        if (reqOrg && reqOrg !== organization_id) {
+            return NextResponse.json(
+                { error: "organization_id does not match your profile." },
+                { status: 403 }
+            );
+        }
+        if (reqRole && reqRole !== role) {
+            return NextResponse.json(
+                { error: "role does not match your profile." },
+                { status: 403 }
+            );
+        }
+        if (reqClientId && role === "client" && reqClientId !== client_id) {
+            return NextResponse.json(
+                { error: "client_id does not match your profile." },
+                { status: 403 }
+            );
+        }
+
         await adminAuth.setCustomUserClaims(uid, {
+            organization_id,
+            role,
+            ...(role === "client" && client_id ? { client_id } : {}),
+        });
+
+        return NextResponse.json({
+            success: true,
             organization_id,
             role,
             ...(client_id ? { client_id } : {}),
         });
-
-        return NextResponse.json({ success: true }, { status: 200 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("[Agency OS] set-claims error:", error);
         return NextResponse.json(
             { error: "Failed to set custom claims." },
@@ -46,4 +113,3 @@ export async function POST(req: NextRequest) {
         );
     }
 }
-

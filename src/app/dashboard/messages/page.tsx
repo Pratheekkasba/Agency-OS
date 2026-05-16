@@ -363,6 +363,7 @@ export default function MessagesPage() {
   const [search, setSearch] = useState("");
   const [startingChat, setStartingChat] = useState(false);
   const [activeTab, setActiveTab] = useState<"chats" | "triage">("chats");
+  const [selectedTriageId, setSelectedTriageId] = useState<string | null>(null);
   const [triageMessages, setTriageMessages] = useState<Message[]>([]);
   const [pendingMessages, setPendingMessages] = useState<ChatMessage[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -449,10 +450,10 @@ export default function MessagesPage() {
     };
   }, [activeChatId, orgId]);
 
-  // Auto-scroll to bottom when messages arrive
+  // Auto-scroll to bottom when messages arrive (including optimistic sends)
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, pendingMessages]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -614,7 +615,7 @@ export default function MessagesPage() {
         {/* Header */}
         <div className="px-5 pt-5 pb-3 border-b border-[#1F1F2B] shrink-0">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+            <h1 className="hidden md:block text-xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Inbox
             </h1>
             <button
@@ -630,7 +631,10 @@ export default function MessagesPage() {
           {/* Tab Switcher */}
           <div className="flex bg-[#131317] border border-[#1F1F2B] rounded-xl p-1 mb-3">
             <button
-              onClick={() => setActiveTab("chats")}
+              onClick={() => {
+                setActiveTab("chats");
+                setSelectedTriageId(null);
+              }}
               className={`flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-bold rounded-lg transition-all ${
                 activeTab === "chats"
                   ? "bg-[#1A1A24] text-white shadow-sm border border-[#2D2D3D]"
@@ -644,7 +648,14 @@ export default function MessagesPage() {
               )}
             </button>
             <button
-              onClick={() => setActiveTab("triage")}
+              onClick={() => {
+                setActiveTab("triage");
+                setActiveChatId(null);
+                const first = triageMessages.find(
+                  (m) => m.status === "new" || m.status === "pending_approval"
+                );
+                setSelectedTriageId(first?.id ?? null);
+              }}
               className={`flex-1 flex items-center justify-center gap-2 py-2 text-[12px] font-bold rounded-lg transition-all ${
                 activeTab === "triage"
                   ? "bg-[#1A1A24] text-white shadow-sm border border-[#2D2D3D]"
@@ -684,8 +695,16 @@ export default function MessagesPage() {
                 {triageMessages.filter(m => m.status === "new" || m.status === "pending_approval").map(m => (
                   <button
                     key={m.id}
-                    onClick={() => setActiveTab("triage")}
-                    className="w-full text-left p-3 rounded-xl border border-[#1F1F2B] bg-[#131317]/30 hover:bg-[#131317] transition-all group"
+                    onClick={() => {
+                      setActiveTab("triage");
+                      setActiveChatId(null);
+                      setSelectedTriageId(m.id);
+                    }}
+                    className={`w-full text-left p-3 rounded-xl border transition-all group ${
+                      selectedTriageId === m.id
+                        ? "border-[#5B5CF6]/50 bg-[#5B5CF6]/10"
+                        : "border-[#1F1F2B] bg-[#131317]/30 hover:bg-[#131317]"
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-bold text-white truncate pr-2">{m.fromName || m.fromContact}</span>
@@ -770,7 +789,13 @@ export default function MessagesPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {activeTab === "triage" ? (
           <TriageBoard 
-            messages={triageMessages} 
+            messages={
+              selectedTriageId
+                ? triageMessages.filter((m) => m.id === selectedTriageId)
+                : triageMessages.filter(
+                    (m) => m.status === "new" || m.status === "pending_approval"
+                  )
+            }
             onApprove={handleApproveTriage} 
             onDismiss={handleDismissTriage}
           />
@@ -825,7 +850,23 @@ export default function MessagesPage() {
                 </div>
               ) : (
                 (() => {
-                  const combined = [...messages, ...pendingMessages];
+                  const combined = [...messages, ...pendingMessages].sort((a, b) => {
+                    const ta =
+                      typeof (a.sentAt as { toMillis?: () => number })?.toMillis ===
+                      "function"
+                        ? (a.sentAt as { toMillis: () => number }).toMillis()
+                        : a.sentAt instanceof Date
+                          ? a.sentAt.getTime()
+                          : 0;
+                    const tb =
+                      typeof (b.sentAt as { toMillis?: () => number })?.toMillis ===
+                      "function"
+                        ? (b.sentAt as { toMillis: () => number }).toMillis()
+                        : b.sentAt instanceof Date
+                          ? b.sentAt.getTime()
+                          : 0;
+                    return ta - tb;
+                  });
                   return combined.map((msg, i) => {
                     const isAgency = msg.senderRole === "agency";
                     const prev = combined[i - 1];

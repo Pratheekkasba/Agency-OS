@@ -72,12 +72,13 @@ type SortableByTimestamp = {
   created_at?: unknown;
   createdAt?: unknown;
   receivedAt?: unknown;
+  sentAt?: unknown;
 };
 
 function sortByNewest<T extends SortableByTimestamp>(items: T[]): T[] {
   return [...items].sort((a, b) => {
-    const aMs = timestampMs(a.created_at ?? a.createdAt ?? a.receivedAt);
-    const bMs = timestampMs(b.created_at ?? b.createdAt ?? b.receivedAt);
+    const aMs = timestampMs(a.created_at ?? a.createdAt ?? a.receivedAt ?? a.sentAt);
+    const bMs = timestampMs(b.created_at ?? b.createdAt ?? b.receivedAt ?? b.sentAt);
     return bMs - aMs;
   });
 }
@@ -703,13 +704,14 @@ export function subscribeToChatMessages(
 ): () => void {
   const q = query(
     collection(db, "chats", chatId, "messages"),
-    where("organization_id", "==", organization_id),
-    orderBy("sentAt", "asc")
+    where("organization_id", "==", organization_id)
   );
   return onSnapshot(
     q,
     (snap) => {
-      const messages = mapActiveDocs<ChatMessage>(snap.docs as QueryDocumentSnapshot[]);
+      const messages = sortByNewest(
+        mapActiveDocs<ChatMessage>(snap.docs as QueryDocumentSnapshot[])
+      ).reverse();
       callback(messages);
     },
     (error) => {
@@ -755,6 +757,11 @@ export async function sendChatMessage(
 export async function markChatReadByAgency(chatId: string): Promise<void> {
   const chatRef = doc(db, "chats", chatId);
   await updateDoc(chatRef, { unreadAgency: 0 });
+}
+
+export async function markChatReadByClient(chatId: string): Promise<void> {
+  const chatRef = doc(db, "chats", chatId);
+  await updateDoc(chatRef, { unreadClient: 0 });
 }
 
 /**

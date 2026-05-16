@@ -705,8 +705,8 @@ export default function TasksPage() {
       {/* Header */}
       <div className="px-6 lg:px-8 pt-5 pb-4 border-b border-[#1F1F2B] shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div>
-            <h1 className="text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Tasks</h1>
+          <div className="min-w-0">
+            <h1 className="hidden md:block text-xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Tasks</h1>
             <p className="text-xs text-[#9CA3AF] mt-0.5">
               {isLoading ? "Loading…" : <>{doneTasks}/{totalTasks} complete{overdueTasks > 0 && <span className="text-red-400 ml-2 font-semibold">· {overdueTasks} overdue</span>}</>}
             </p>

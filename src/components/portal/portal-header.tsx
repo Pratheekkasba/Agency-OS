@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { MessageSquare } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { formatPortalDate } from "@/lib/portal/utils";
 import type { Client } from "@/types";
@@ -24,7 +25,14 @@ export function PortalHeader({ client }: { client: Client | null }) {
         </p>
       </Link>
 
-      <div className="flex items-center gap-3 shrink-0 relative">
+      <div className="flex items-center gap-2 shrink-0 relative">
+        <Link
+          href="/portal/messages"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          Messages
+        </Link>
         <button
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -49,6 +57,14 @@ export function PortalHeader({ client }: { client: Client | null }) {
               onClick={() => setIsMenuOpen(false)}
             />
             <div className="absolute top-12 right-0 w-48 bg-card border border-border rounded-xl shadow-2xl py-2 z-50">
+              <Link
+                href="/portal/messages"
+                onClick={() => setIsMenuOpen(false)}
+                className="sm:hidden flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Messages
+              </Link>
               <div className="px-4 py-2 border-b border-border/50">
                 <p className="text-sm font-medium text-foreground truncate">
                   {user?.displayName || client?.name || "Client"}

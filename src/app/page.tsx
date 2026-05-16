@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import Link from "next/link";
 import { WaitlistHero } from "@/components/ui/waitlist-hero";
 import { Navbar } from "@/components/ui/navbar";
 import {
@@ -27,21 +28,21 @@ const features = [
     icon: <Eye className="w-5 h-5" />,
     color: C.primary,
     label: "Smart Client Portal",
-    desc: "Give clients real-time visibility without sending a single email. Done, approved, and next---always clear. Let your clients view the complete project timeline, access secure files, and approve deliverables with ease.",
+    desc: "Give clients real-time visibility without sending a single email. Done, approved, and next—always clear. Let your clients view the complete project timeline, access secure files, and approve deliverables with ease.",
   },
   {
     key: "ai-inbox",
     icon: <Bot className="w-5 h-5" />,
     color: C.accent,
     label: "AI Inbox Triage",
-    desc: "Auto-tag intent, draft replies, and route messages to the right owner---so nothing slips through.",
+    desc: "Auto-tag intent, draft replies, and route messages to the right owner—so nothing slips through.",
   },
   {
     key: "analytics",
     icon: <BarChart3 className="w-5 h-5" />,
     color: "#10b981",
     label: "Agency Analytics",
-    desc: "Track response time, throughput, and satisfaction in one dashboard---know what to fix before clients feel it.",
+    desc: "Track response time, throughput, and satisfaction in one dashboard—know what to fix before clients feel it.",
   },
   {
     key: "shared-inbox",
@@ -55,7 +56,7 @@ const features = [
     icon: <Lock className="w-5 h-5" />,
     color: "#ec4899",
     label: "Enterprise Security",
-    desc: "Role-based access and secure defaults from day one---built to earn trust with every client login.",
+    desc: "Role-based access and secure defaults from day one—built to earn trust with every client login.",
   },
   {
     key: "realtime",
@@ -381,10 +382,10 @@ export default function Home() {
               Agency OS brings everything into one place.
             </h3>
             <p style={{ fontSize: 15, lineHeight: 1.75, color: C.muted, marginBottom: 24 }}>
-              One login. Client portals, AI inbox, project tracking, and analytics --- unified and working together from day one.
+              One login. Client portals, AI inbox, project tracking, and analytics—unified and working together from day one.
             </p>
             <div className="flex flex-col gap-3">
-              {["Client portal visible to clients --- not just you", "Every message triaged and pre-drafted by AI", "Your whole team, one shared view"].map((item) => (
+              {["Client portal visible to clients—not just you", "Every message triaged and pre-drafted by AI", "Your whole team, one shared view"].map((item) => (
                 <div key={item} className="flex items-start gap-3" style={{ fontSize: 14, color: C.muted }}>
                   <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#10b981" }} />
                   {item}
@@ -524,11 +525,11 @@ export default function Home() {
       <footer className="relative z-10 py-10 px-6" style={{ borderTop: `1px solid ${C.border}` }}>
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 18, fontWeight: 700, color: C.text }}>Agency OS.</div>
-          <p style={{ fontSize: 13, color: "#333344" }}>© 2025 Agency OS. All rights reserved.</p>
+          <p style={{ fontSize: 13, color: "#333344" }}>© 2026 Agency OS. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            {["Privacy", "Terms", "Contact"].map((l) => (
-              <a key={l} href="#" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }} className="hover:text-white transition-colors">{l}</a>
-            ))}
+            <Link href="/privacy" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }} className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }} className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/support" style={{ fontSize: 13, color: C.muted, textDecoration: "none" }} className="hover:text-white transition-colors">Support</Link>
           </div>
         </div>
       </footer>

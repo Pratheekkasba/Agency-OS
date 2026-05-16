@@ -224,8 +224,8 @@ export default function TeamPage() {
     <div className="h-full overflow-y-auto p-6 lg:p-8 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Team</h1>
+        <div className="min-w-0">
+          <h1 className="hidden md:block text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Team</h1>
           <p className="text-sm text-[#9CA3AF] mt-0.5">{members.length} active members</p>
         </div>
         <button

@@ -122,22 +122,30 @@ service cloud.firestore {
       // on resource.data which is unreliable for list/query operations, and avoids
       // needing a denormalized organization_id in every message doc.
       match /messages/{messageId} {
+        function parentChat() {
+          return get(/databases/$(database)/documents/chats/$(chatId)).data;
+        }
+
         function parentOrg() {
-          return get(/databases/$(database)/documents/chats/$(chatId)).data.organization_id;
+          return parentChat().organization_id;
+        }
+
+        function clientOwnsParentChat() {
+          return isClientRole()
+            && request.auth.token.client_id != null
+            && parentChat().clientId == request.auth.token.client_id
+            && belongsToOrg(parentOrg());
         }
 
         // Agency: read all messages if they belong to the org
         allow read: if request.auth != null && belongsToOrg(parentOrg());
 
-        // Agency: create messages in their own org's chat (Admin SDK handles this,
-        // but rule allows direct writes too for flexibility)
+        // Agency: create messages in their own org's chat
         allow create: if request.auth != null && canWriteToOrg(parentOrg());
 
-        // Clients: read + write their own thread via client_id claim
-        allow read: if isClientRole()
-          && request.auth.token.client_id != null;
-        allow create: if isClientRole()
-          && request.auth.token.client_id != null
+        // Clients: only their own chat thread (matched by parent chat clientId)
+        allow read: if clientOwnsParentChat();
+        allow create: if clientOwnsParentChat()
           && request.resource.data.senderRole == 'client';
 
         allow update, delete: if false;

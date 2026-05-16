@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Space_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -15,7 +15,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://agency-os.tech"),
   title: {
-    default: "Agency OS --- Client Experience Infrastructure for Agencies",
+    default: "Agency OS | Client Experience Infrastructure for Agencies",
     template: "%s | Agency OS",
   },
   description:
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://agency-os.tech",
     siteName: "Agency OS",
-    title: "Agency OS --- Client Experience Infrastructure for Agencies",
+    title: "Agency OS | Client Experience Infrastructure for Agencies",
     description:
       "Replace manual status emails with a real-time, white-label client portal. Agency OS gives clients on-demand project visibility so they stop asking 'what's the status?'",
     images: [
@@ -57,13 +57,13 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Agency OS --- Client Experience Infrastructure",
+        alt: "Agency OS | Client Experience Infrastructure",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agency OS --- Client Experience Infrastructure for Agencies",
+    title: "Agency OS | Client Experience Infrastructure for Agencies",
     description:
       "Replace status email threads with a white-label client portal. Built for high-ticket agencies, powered by Google AI.",
     images: ["/og-image.png"],

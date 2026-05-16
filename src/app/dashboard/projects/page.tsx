@@ -165,8 +165,8 @@ export default function ProjectsPage() {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <div className="min-w-0">
+          <h1 className="hidden md:block text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             Projects
           </h1>
           <p className="text-sm text-[#9CA3AF] mt-0.5">
@@ -231,7 +231,7 @@ export default function ProjectsPage() {
             </div>
           ))}
         </div>
-      ) : viewMode === "grid" ? (
+      ) : displayProjects.length === 0 ? null : viewMode === "grid" ? (
         /* Grid View */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {displayProjects.map(project => {
@@ -355,7 +355,7 @@ export default function ProjectsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4 text-sm text-[#9CA3AF]">
-                      {project.dueDate ? new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "---"}
+                      {project.dueDate ? new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <button

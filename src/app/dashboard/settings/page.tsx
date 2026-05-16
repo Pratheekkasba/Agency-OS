@@ -109,8 +109,8 @@ export default function SettingsPage() {
   return (
     <div className="h-full overflow-y-auto p-6 lg:p-8 max-w-3xl mx-auto space-y-6 animate-fade-in pb-20">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Settings</h1>
+      <div className="min-w-0">
+        <h1 className="hidden md:block text-2xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Settings</h1>
         <p className="text-sm text-[#9CA3AF] mt-0.5">Manage your agency workspace and preferences</p>
       </div>
 
@@ -218,7 +218,7 @@ export default function SettingsPage() {
             </div>
             <button className="flex items-center gap-1.5 px-4 py-2 bg-[#5B5CF6] hover:bg-[#4F50DB] text-white text-xs font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(91,92,246,0.2)]">
               <Sparkles className="w-3.5 h-3.5" />
-              Upgrade --- $99/mo
+              Upgrade — $99/mo
             </button>
           </div>
         </div>
@@ -226,6 +226,11 @@ export default function SettingsPage() {
 
       {/* Notifications */}
       <SettingSection title="Notifications">
+        <div className="px-6 py-3 border-b border-[#1F1F2B] bg-[#131317]/40">
+          <p className="text-xs text-[#6B7280]">
+            Email notification delivery is coming soon. Preferences below are saved locally for now.
+          </p>
+        </div>
         <SettingRow label="Client update reminders" description="Alert when a client hasn't received an update in 3+ days">
           <Toggle value={notifUpdates} onChange={() => setNotifUpdates(v => !v)} />
         </SettingRow>

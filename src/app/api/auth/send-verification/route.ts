@@ -11,6 +11,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
+    try {
+      const existing = await adminAuth.getUserByEmail(email);
+      if (existing.emailVerified) {
+        return NextResponse.json({ success: true, skipped: true, reason: "already_verified" });
+      }
+    } catch {
+      /* user may not exist yet — continue */
+    }
+
     const verificationLink = await adminAuth.generateEmailVerificationLink(email);
 
     const html = buildEmailHtml({

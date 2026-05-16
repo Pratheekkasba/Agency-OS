@@ -4,6 +4,7 @@ import { adminAuth, adminDb } from "@/lib/firebase/admin";
 /**
  * POST /api/auth/verify-access-id
  * Looks up a client portal access code via Admin SDK (bypasses Firestore rules).
+ * Restricted to users completing client onboarding (no agency role yet).
  * Body: { idToken: string; accessId: string }
  */
 export async function POST(req: NextRequest) {
@@ -18,7 +19,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await adminAuth.verifyIdToken(idToken);
+    const decoded = await adminAuth.verifyIdToken(idToken);
+    const userSnap = await adminDb.collection("users").doc(decoded.uid).get();
+    const user = userSnap.exists ? userSnap.data() : null;
+
+    const role = user?.role as string | undefined;
+    if (role && role !== "client") {
+      return NextResponse.json(
+        { error: "Access ID verification is only available during client onboarding." },
+        { status: 403 }
+      );
+    }
+
+    if (role === "client" && user?.clientId) {
+      return NextResponse.json(
+        { error: "Your account is already linked to a client portal." },
+        { status: 403 }
+      );
+    }
 
     const normalized = String(accessId).trim().toUpperCase();
     const snap = await adminDb

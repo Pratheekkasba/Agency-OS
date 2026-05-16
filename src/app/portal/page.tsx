@@ -125,16 +125,24 @@ export default function ClientPortal() {
             </section>
 
             {/* Single footer action */}
-            <footer className="pt-6 border-t border-outline-variant/10 text-center">
-              <p className="text-sm text-muted-foreground mb-3">
+            <footer className="pt-6 border-t border-outline-variant/10 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">
                 Questions about your project?
               </p>
-              <Link
-                href="/support"
-                className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors"
-              >
-                Contact your agency
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/portal/messages"
+                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Message your agency
+                </Link>
+                <Link
+                  href="/support"
+                  className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-primary/10 text-primary text-sm font-semibold hover:bg-primary/20 transition-colors"
+                >
+                  Help & support
+                </Link>
+              </div>
             </footer>
           </div>
         )}

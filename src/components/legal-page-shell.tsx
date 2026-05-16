@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 export function LegalPageShell({
@@ -8,16 +11,18 @@ export function LegalPageShell({
   title: string;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen bg-[#0B0B0F] text-white">
       <div className="max-w-2xl mx-auto px-6 py-12">
-        <Link
-          href="/login"
+        <button
+          onClick={() => router.back()}
           className="inline-flex items-center gap-2 text-sm text-[#9CA3AF] hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Back
-        </Link>
+        </button>
         <h1
           className="text-3xl font-bold text-white mb-2"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}

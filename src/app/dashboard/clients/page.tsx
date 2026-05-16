@@ -285,8 +285,8 @@ export default function ClientsPage() {
 
       {/* --- Header --- */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+        <div className="min-w-0">
+          <h1 className="hidden md:block text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
             Clients
           </h1>
           <p className="text-sm text-[#6B7280] mt-1">

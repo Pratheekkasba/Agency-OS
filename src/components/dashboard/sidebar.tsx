@@ -76,16 +76,19 @@ function SidebarItem({
   item,
   isActive,
   collapsed,
+  onNavigate,
 }: {
   item: NavItem;
   isActive: boolean;
   collapsed: boolean;
+  onNavigate?: () => void;
 }) {
   const Icon = item.icon;
 
   return (
     <Link
       href={item.href}
+      onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       className={cn(
         "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 relative overflow-hidden group",
@@ -137,14 +140,18 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
 }
 
 function Divider() {
-  return <div className="h-px bg-[#1A1A24]/50 mx-4 my-3 shrink-0" />;
+  return <div className="h-px bg-[#1A1A24]/50 mx-2 my-3 shrink-0 max-w-full" />;
 }
 
-export function DashboardSidebar() {
+type SidebarVariant = "desktop" | "mobile";
+
+export function DashboardSidebar({ variant = "desktop" }: { variant?: SidebarVariant }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, userData } = useAuth();
-  const { collapsed, toggle } = useSidebar();
+  const { collapsed, toggle, setMobileOpen } = useSidebar();
+  const isMobileDrawer = variant === "mobile";
+  const isCollapsed = isMobileDrawer ? false : collapsed;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [agencyName, setAgencyName] = useState("My Agency");
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -238,33 +245,40 @@ export function DashboardSidebar() {
     .toUpperCase();
   const agencyInitials = agencyName.substring(0, 2).toUpperCase();
 
+  const handleNavClick = () => {
+    if (isMobileDrawer) setMobileOpen(false);
+  };
+
   return (
     <aside
       className={cn(
-        "hidden md:grid h-dvh max-h-dvh shrink-0 grid-rows-[auto_minmax(0,1fr)_auto] border-r border-[#1A1A24] bg-[#0B0B0F] transition-[width] duration-200 ease-out",
-        collapsed ? "w-[72px]" : "w-[260px]"
+        "h-dvh max-h-dvh shrink-0 grid grid-rows-[auto_minmax(0,1fr)_auto] border-r border-[#1A1A24] bg-[#0B0B0F] overflow-x-hidden max-w-full min-w-0 box-border transition-[width] duration-200 ease-out",
+        isMobileDrawer
+          ? "w-full"
+          : cn("hidden md:grid", isCollapsed ? "w-[72px]" : "w-[260px]")
       )}
     >
       <div
         className={cn(
-          "h-[72px] border-b border-[#1A1A24] flex items-center shrink-0 w-full min-w-0",
-          collapsed ? "justify-center px-2" : "px-5"
+          "h-[72px] border-b border-[#1A1A24] flex items-center shrink-0 w-full min-w-0 max-w-full overflow-hidden",
+          isCollapsed ? "justify-center px-2" : "px-4"
         )}
       >
         <Link
           href="/dashboard"
+          onClick={handleNavClick}
           className={cn(
-            "flex items-center gap-3 min-w-0 hover:opacity-90 transition-opacity w-full",
-            collapsed && "justify-center"
+            "flex items-center gap-3 min-w-0 max-w-full hover:opacity-90 transition-opacity w-full overflow-hidden",
+            isCollapsed && "justify-center"
           )}
-          title={collapsed ? agencyName : undefined}
+          title={isCollapsed ? agencyName : undefined}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#A4A6FF] to-[#5B5CF6] flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(91,92,246,0.2)]">
             <span className="text-[#1200A3] text-[11px] font-black uppercase tracking-tighter">
               {agencyInitials}
             </span>
           </div>
-          {!collapsed && (
+          {!isCollapsed && (
             <span className="text-[15px] font-bold text-white tracking-tight truncate font-headline flex-1 min-w-0">
               {agencyName}
             </span>
@@ -272,33 +286,35 @@ export function DashboardSidebar() {
         </Link>
       </div>
 
-      <nav className="sidebar-nav-scroll px-4 py-4 w-full min-w-0">
+      <nav className="sidebar-nav-scroll px-3 py-4 w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto">
         <div className="space-y-1">
           {NAV_MAIN.map((item) => (
             <SidebarItem
               key={item.href}
               item={item}
               isActive={pathname === item.href}
-              collapsed={collapsed}
+              collapsed={isCollapsed}
+              onNavigate={handleNavClick}
             />
           ))}
         </div>
 
         <Divider />
-        <SectionLabel label="Work" collapsed={collapsed} />
+        <SectionLabel label="Work" collapsed={isCollapsed} />
         <div className="space-y-1">
           {NAV_WORK.map((item) => (
             <SidebarItem
               key={item.href}
               item={item}
               isActive={pathname.startsWith(item.href)}
-              collapsed={collapsed}
+              collapsed={isCollapsed}
+              onNavigate={handleNavClick}
             />
           ))}
         </div>
 
         <Divider />
-        <SectionLabel label="Inbox" collapsed={collapsed} />
+        <SectionLabel label="Inbox" collapsed={isCollapsed} />
         <div className="space-y-1">
           {NAV_INBOX.map((item) => {
             let badge = item.badge;
@@ -314,21 +330,23 @@ export function DashboardSidebar() {
                   badgeColor: item.label === "Messages" ? "bg-[#5B5CF6]" : item.badgeColor 
                 }}
                 isActive={pathname.startsWith(item.href)}
-                collapsed={collapsed}
+                collapsed={isCollapsed}
+                onNavigate={handleNavClick}
               />
             );
           })}
         </div>
 
         <Divider />
-        <SectionLabel label="Team" collapsed={collapsed} />
+        <SectionLabel label="Team" collapsed={isCollapsed} />
         <div className="space-y-1">
           {NAV_TEAM.map((item) => (
             <SidebarItem
               key={item.href}
               item={item}
               isActive={pathname.startsWith(item.href)}
-              collapsed={collapsed}
+              collapsed={isCollapsed}
+              onNavigate={handleNavClick}
             />
           ))}
         </div>
@@ -338,48 +356,51 @@ export function DashboardSidebar() {
           <SidebarItem
             item={{ href: "/dashboard/settings", label: "Settings", icon: Settings }}
             isActive={pathname.startsWith("/dashboard/settings")}
-            collapsed={collapsed}
+            collapsed={isCollapsed}
+            onNavigate={handleNavClick}
           />
         </div>
       </nav>
 
-      <div className="border-t border-[#1A1A24] bg-[#0B0B0F] shrink-0 w-full min-w-0">
+      <div className="border-t border-[#1A1A24] bg-[#0B0B0F] shrink-0 w-full min-w-0 max-w-full overflow-hidden">
+        {!isMobileDrawer && (
         <div
           className={cn(
             "flex items-center border-b border-[#1A1A24]/60",
-            collapsed ? "justify-center p-2" : "justify-end px-3 py-2"
+            isCollapsed ? "justify-center p-2" : "justify-end px-3 py-2"
           )}
         >
           <button
             type="button"
             onClick={toggle}
             className="p-2 rounded-lg text-[#9CA3AF] hover:text-white hover:bg-[#1A1A24] transition-colors shrink-0"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {collapsed ? (
+            {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
             ) : (
               <ChevronLeft className="w-4 h-4" />
             )}
           </button>
         </div>
+        )}
 
-        <div className={cn("p-3", collapsed && "px-2")}>
+        <div className={cn("p-3", isCollapsed && !isMobileDrawer && "px-2")}>
           <div className="relative w-full min-w-0" ref={menuRef}>
             <button
               type="button"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              title={collapsed ? displayName : undefined}
+              title={isCollapsed && !isMobileDrawer ? displayName : undefined}
               className={cn(
-                "flex items-center w-full min-w-0 gap-3 rounded-xl transition-colors text-left",
-                collapsed ? "justify-center p-2" : "px-3 py-2.5",
+                "flex items-center w-full min-w-0 max-w-full gap-3 rounded-xl transition-colors text-left overflow-hidden",
+                isCollapsed && !isMobileDrawer ? "justify-center p-2" : "px-3 py-2.5",
                 isMenuOpen ? "bg-[#1A1A24]" : "hover:bg-[#1A1A24]/60"
               )}
             >
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#2D2D3D] to-[#1F1F2B] flex items-center justify-center text-[#E5E7EB] text-[12px] font-bold shrink-0 shadow-inner border border-[#374151]">
                 {initials}
               </div>
-              {!collapsed && (
+              {(!isCollapsed || isMobileDrawer) && (
                 <div className="flex-1 min-w-0 text-left overflow-hidden">
                   <p className="text-[14px] font-bold text-white truncate leading-tight w-full">
                     {displayName}

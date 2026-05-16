@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { auth } from "@/lib/firebase/config";
 import { addUpdate, subscribeToClients, getTasksByClient } from "@/lib/firebase/firestore";
 import { notifyClientUpdateEmail } from "@/lib/email/notify";
 import { Sparkles, ChevronDown, Check, Copy, Pencil, RefreshCw } from "lucide-react";
@@ -137,13 +138,39 @@ export default function UpdatesPage() {
 
   const livePreviewText = getLivePreview();
 
-  const handleGenerate = () => {
-    if (!selectedClient || !hasContent) return;
+  const handleGenerate = async () => {
+    if (!selectedClient || !auth.currentUser) return;
     setGenerating(true);
-    // Simulate generation delay
-    setTimeout(() => {
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const res = await fetch("/api/updates/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          idToken,
+          clientId: selectedClient.id,
+          tone: selectedTone,
+          existingDone: doneText,
+          existingInProgress: inProgressText,
+          existingNext: nextText,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate update");
+      }
+      setDoneText((data.done as string[]).join("\n"));
+      setInProgressText((data.inProgress as string[]).join("\n"));
+      setNextText((data.next as string[]).join("\n"));
+      toast.success("AI draft generated from project data");
+    } catch (err) {
+      console.error(err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to generate update"
+      );
+    } finally {
       setGenerating(false);
-    }, 1500);
+    }
   };
 
   const handlePullFromTasks = async () => {
@@ -232,8 +259,8 @@ export default function UpdatesPage() {
     <div className="h-full overflow-y-auto p-8 max-w-7xl mx-auto space-y-8 relative animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white font-headline tracking-tight">Create Client Update</h1>
+        <div className="min-w-0">
+          <h1 className="hidden md:block text-2xl font-bold text-white font-headline tracking-tight">Create Client Update</h1>
           <p className="text-[#9CA3AF] mt-1.5 text-[15px]">Draft structured updates and send them directly to your clients.</p>
         </div>
       </div>
@@ -388,7 +415,7 @@ export default function UpdatesPage() {
                 <div className="flex items-center gap-4">
                   <button
                     onClick={handleGenerate}
-                    disabled={!selectedClientId || !hasContent || generating}
+                    disabled={!selectedClientId || generating}
                     className="flex-1 bg-[#5B5CF6] hover:bg-[#4F50DB] border border-[#5B5CF6] hover:border-[#4F50DB] text-white rounded-xl py-3.5 text-[15px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(91,92,246,0.15)] hover:shadow-[0_0_25px_rgba(91,92,246,0.25)] disabled:shadow-none relative overflow-hidden group"
                   >
                     <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />

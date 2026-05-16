@@ -47,6 +47,11 @@ export default function LoginPage() {
         }
         if (userData.role === "client") {
           router.push("/portal");
+        } else if (
+          requiresEmailVerification(userData.role) &&
+          !cred.user.emailVerified
+        ) {
+          router.push("/verify");
         } else {
           router.push("/dashboard");
         }
